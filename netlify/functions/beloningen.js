@@ -66,9 +66,10 @@ const TOEGESTANE_STATUS = ['concept', 'bevestigd', 'uitbetaald', 'vervallen'];
 // foreign-key-relaties in de database gedefinieerd zijn.
 async function scanNieuweDeals() {
   // 1. Pool-deals met een bezichtiging
+  // lead_status kan 'Deal' of 'deal' zijn → hoofdletter-ongevoelig matchen via ilike
   const leads = await sb.get(
     'bellijst_items?select=id,bezichtiger_naam,bezichtiger_email,adres,bezichtiging_id' +
-    '&bron=eq.pool&lead_status=eq.deal&bezichtiging_id=not.is.null'
+    '&bron=eq.pool&lead_status=ilike.deal&bezichtiging_id=not.is.null'
   );
   if (!leads.length) return 0;
 
