@@ -1,0 +1,270 @@
+<!DOCTYPE html>
+<html lang="nl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>MvA Finance · Beloningen</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:opsz,wght@9..40,400;9..40,500;9..40,600;9..40,700&family=DM+Serif+Display&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --navy:#1A2B5F; --oranje:#E8500A; --zand:#B0ACA2; --rand:#E2DFD8;
+    --tekst:#1A2B5F; --grijs:#6B6760; --bg:#F7F6F3; --wit:#fff;
+    --groen:#15803d; --rood:#991b1b;
+    --c-concept:#EF9F27; --c-concept-bg:#FAEEDA; --c-concept-tx:#854F0B;
+    --c-bevestigd:#3B82C4; --c-bevestigd-bg:#E6F0FA; --c-bevestigd-tx:#1E5A8A;
+    --c-uitbetaald:#1D9E75; --c-uitbetaald-bg:#E1F5EE; --c-uitbetaald-tx:#0F6E56;
+    --c-vervallen:#B4B2A9; --c-vervallen-bg:#F1EFE8; --c-vervallen-tx:#5F5E5A;
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--tekst);line-height:1.5}
+  .wrap{max-width:1000px;margin:0 auto;padding:24px 16px 80px}
+
+  .login-overlay{position:fixed;inset:0;background:var(--bg);display:flex;align-items:center;justify-content:center;z-index:100;padding:20px}
+  .login-kaart{background:var(--wit);border:1px solid var(--rand);border-radius:14px;padding:32px 28px;max-width:360px;width:100%;text-align:center}
+  .login-kaart .titel{font-family:'DM Serif Display',serif;font-size:26px;color:var(--navy);margin-bottom:6px}
+  .login-kaart .sub{font-size:13px;color:var(--grijs);margin-bottom:22px}
+  .login-kaart input{font-family:inherit;font-size:15px;border:1.5px solid var(--rand);border-radius:9px;padding:11px 13px;width:100%;outline:none;color:var(--tekst);margin-bottom:12px}
+  .login-kaart input:focus{border-color:var(--navy)}
+  .login-kaart button{font-family:inherit;cursor:pointer;border:none;border-radius:9px;font-weight:600;font-size:15px;background:var(--navy);color:#fff;padding:11px 20px;width:100%}
+  .login-kaart button:hover{filter:brightness(1.1)}
+  .login-fout{font-size:13px;color:var(--rood);min-height:18px;margin-bottom:8px}
+
+  header{display:flex;align-items:flex-start;justify-content:space-between;gap:16px;margin-bottom:24px;flex-wrap:wrap}
+  .titel-h{font-family:'DM Serif Display',serif;font-size:30px;color:var(--navy);line-height:1.1}
+  .sub{font-size:13px;color:var(--grijs);margin-top:4px}
+  .terug{font-size:13px;color:var(--grijs);text-decoration:none;border:1px solid var(--rand);padding:7px 13px;border-radius:8px;background:var(--wit);white-space:nowrap}
+  .terug:hover{border-color:var(--navy);color:var(--navy)}
+
+  .totalen{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:12px;margin-bottom:18px}
+  .tot{background:var(--wit);border:1px solid var(--rand);border-radius:12px;padding:16px 18px}
+  .tot.accent{background:var(--navy);border-color:var(--navy)}
+  .tot-label{font-size:11px;text-transform:uppercase;letter-spacing:.06em;color:var(--grijs)}
+  .tot.accent .tot-label{color:rgba(255,255,255,.6)}
+  .tot-getal{font-size:24px;font-weight:700;color:var(--navy);margin-top:4px}
+  .tot.accent .tot-getal{color:#fff}
+  .tot-getal.concept{color:var(--c-concept-tx)}
+  .tot-getal.uitbetaald{color:var(--c-uitbetaald-tx)}
+  .tot-klein{font-size:12px;color:var(--grijs);margin-top:2px}
+  .tot.accent .tot-klein{color:rgba(255,255,255,.55)}
+
+  .balk{display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap;margin-bottom:16px}
+  .btn-scan{font-family:inherit;cursor:pointer;border:none;border-radius:9px;font-weight:600;font-size:14px;background:var(--oranje);color:#fff;padding:10px 18px}
+  .btn-scan:hover{filter:brightness(1.05)}
+  .btn-scan:disabled{opacity:.5;cursor:default}
+  .scan-note{font-size:12px;color:var(--grijs)}
+
+  .lijst{display:flex;flex-direction:column;gap:10px}
+  .bel{background:var(--wit);border:1px solid var(--rand);border-left:4px solid var(--c-concept);border-radius:10px;padding:13px 15px}
+  .bel-top{display:flex;justify-content:space-between;align-items:flex-start;gap:10px;flex-wrap:wrap}
+  .bel-makelaar{font-weight:600;font-size:15px;color:var(--navy)}
+  .bel-klant{font-size:13px;color:var(--tekst);margin-top:2px}
+  .bel-meta{font-size:12px;color:var(--grijs);margin-top:2px}
+  .bel-rechts{text-align:right;white-space:nowrap}
+  .chip{display:inline-block;font-size:12px;font-weight:600;padding:3px 11px;border-radius:20px}
+  .bel-bedrag{font-size:18px;font-weight:700;color:var(--navy);margin-top:4px}
+
+  .acties{display:flex;gap:8px;flex-wrap:wrap;margin-top:13px}
+  .acties button{font-family:inherit;cursor:pointer;border:none;border-radius:7px;font-weight:600;font-size:13px;padding:7px 13px}
+  .btn-bevestig{background:var(--c-bevestigd-bg);color:var(--c-bevestigd-tx)}
+  .btn-bevestig:hover{filter:brightness(.97)}
+  .btn-uitbetaal{background:var(--c-uitbetaald-bg);color:var(--c-uitbetaald-tx)}
+  .btn-uitbetaal:hover{filter:brightness(.97)}
+  .btn-vervallen{background:#f1f0ec;color:var(--grijs)}
+  .btn-vervallen:hover{background:#e7e5df}
+  .btn-terug-status{background:#fff;color:var(--grijs);border:1px solid var(--rand)!important}
+
+  .leeg,.laden{text-align:center;padding:40px;color:var(--grijs);font-size:14px;background:var(--wit);border:1px solid var(--rand);border-radius:12px}
+  .toast{position:fixed;bottom:24px;left:50%;transform:translateX(-50%);background:var(--navy);color:#fff;padding:11px 20px;border-radius:10px;font-size:14px;box-shadow:0 8px 24px rgba(0,0,0,.18);opacity:0;transition:opacity .25s,transform .25s;pointer-events:none;z-index:50}
+  .toast.show{opacity:1;transform:translateX(-50%) translateY(-4px)}
+  .toast.fout{background:var(--rood)}
+  .footer{text-align:center;font-size:12px;color:var(--zand);margin-top:32px}
+
+  @media (max-width:640px){ .titel-h{font-size:24px} }
+</style>
+</head>
+<body>
+
+<div class="login-overlay" id="login">
+  <div class="login-kaart">
+    <div class="titel">MvA Finance</div>
+    <div class="sub">Beloningen · log in om verder te gaan</div>
+    <div class="login-fout" id="login-fout"></div>
+    <input type="password" id="ww" placeholder="Wachtwoord" autocomplete="current-password">
+    <button onclick="login()">Inloggen</button>
+  </div>
+</div>
+
+<div class="wrap" id="app" style="display:none">
+  <header>
+    <div>
+      <div class="titel-h">Beloningen</div>
+      <div class="sub">&euro;175 voor de gevende makelaar bij een geslaagde doorgegeven lead uit de pool</div>
+    </div>
+    <a class="terug" href="https://mva-intelligence.netlify.app/">&larr; Terug naar portal</a>
+  </header>
+
+  <div class="totalen" id="totalen"></div>
+
+  <div class="balk">
+    <button class="btn-scan" id="btn-scan" onclick="scan()">&#128269; Scan nieuwe deals</button>
+    <span class="scan-note">Zoekt pool-leads die op &lsquo;deal&rsquo; staan en zet ze op de conceptlijst.</span>
+  </div>
+
+  <div class="lijst" id="lijst">
+    <div class="laden">Laden&hellip;</div>
+  </div>
+
+  <div class="footer"><b>MvA Intelligence</b> &middot; Finance &middot; Beloningen &middot; 2026</div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+const API = '/.netlify/functions/beloningen';
+const WACHTWOORD = 'MVA2026!';
+let beloningen = [];
+
+function esc(s){ return String(s==null?'':s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])); }
+function euro(n){ return '\u20ac ' + Number(n||0).toLocaleString('nl-NL',{minimumFractionDigits:2,maximumFractionDigits:2}); }
+function datumNL(s){ if(!s) return ''; const d=new Date(s); return isNaN(d)?'':d.toLocaleDateString('nl-NL',{day:'2-digit',month:'2-digit',year:'numeric'}); }
+
+function toast(msg, fout){
+  const t = document.getElementById('toast');
+  t.textContent = msg; t.className = 'toast show' + (fout ? ' fout' : '');
+  setTimeout(()=>{ t.className = 'toast'; }, 2600);
+}
+
+function login(){
+  if(document.getElementById('ww').value === WACHTWOORD){
+    sessionStorage.setItem('fin_auth','1'); toonApp();
+  } else { document.getElementById('login-fout').textContent = 'Onjuist wachtwoord'; }
+}
+function toonApp(){
+  document.getElementById('login').style.display = 'none';
+  document.getElementById('app').style.display = 'block';
+  laad();
+}
+document.getElementById('ww').addEventListener('keydown', e=>{ if(e.key==='Enter') login(); });
+
+async function api(body){
+  const r = await fetch(API, {method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify(body)});
+  const j = await r.json();
+  if(!r.ok || j.error) throw new Error(j.error || ('HTTP '+r.status));
+  return j;
+}
+
+async function laad(){
+  try{
+    const j = await api({action:'lijst'});
+    beloningen = j.beloningen || [];
+    render();
+  }catch(e){
+    document.getElementById('lijst').innerHTML = '<div class="leeg">Kon beloningen niet laden: '+esc(e.message)+'</div>';
+  }
+}
+
+async function scan(){
+  const btn = document.getElementById('btn-scan');
+  btn.disabled = true; btn.textContent = 'Bezig\u2026';
+  try{
+    const j = await api({action:'scan'});
+    beloningen = j.beloningen || [];
+    render();
+    toast(j.nieuw>0 ? (j.nieuw+' nieuwe '+(j.nieuw===1?'beloning':'beloningen')+' gevonden') : 'Geen nieuwe deals gevonden');
+  }catch(e){ toast('Scan mislukt: '+e.message, true); }
+  finally{ btn.disabled = false; btn.innerHTML = '&#128269; Scan nieuwe deals'; }
+}
+
+const conf = {
+  concept:{bar:'var(--c-concept)', bg:'var(--c-concept-bg)', tx:'var(--c-concept-tx)', label:'Concept'},
+  bevestigd:{bar:'var(--c-bevestigd)', bg:'var(--c-bevestigd-bg)', tx:'var(--c-bevestigd-tx)', label:'Bevestigd'},
+  uitbetaald:{bar:'var(--c-uitbetaald)', bg:'var(--c-uitbetaald-bg)', tx:'var(--c-uitbetaald-tx)', label:'Uitbetaald'},
+  vervallen:{bar:'var(--c-vervallen)', bg:'var(--c-vervallen-bg)', tx:'var(--c-vervallen-tx)', label:'Vervallen'},
+};
+
+function actiesHtml(b){
+  const id = b.id;
+  if(b.status === 'concept'){
+    return `<button class="btn-bevestig" onclick="zet(${id},'bevestigd')">Bevestigen</button>
+            <button class="btn-vervallen" onclick="zet(${id},'vervallen')">Vervallen</button>`;
+  }
+  if(b.status === 'bevestigd'){
+    return `<button class="btn-uitbetaal" onclick="zet(${id},'uitbetaald')">Markeer uitbetaald</button>
+            <button class="btn-terug-status" onclick="zet(${id},'concept')">Terug naar concept</button>
+            <button class="btn-vervallen" onclick="zet(${id},'vervallen')">Vervallen</button>`;
+  }
+  if(b.status === 'uitbetaald'){
+    return `<button class="btn-terug-status" onclick="zet(${id},'bevestigd')">Terug naar bevestigd</button>`;
+  }
+  if(b.status === 'vervallen'){
+    return `<button class="btn-terug-status" onclick="zet(${id},'concept')">Heractiveren</button>`;
+  }
+  return '';
+}
+
+function render(){
+  const telling = {concept:0, bevestigd:0, uitbetaald:0, vervallen:0};
+  let openBedrag = 0, uitbetaaldBedrag = 0;
+  let html = '';
+  for(const b of beloningen){
+    const c = conf[b.status] || conf.concept;
+    telling[b.status] = (telling[b.status]||0) + 1;
+    if(b.status==='concept' || b.status==='bevestigd') openBedrag += Number(b.bedrag||0);
+    if(b.status==='uitbetaald') uitbetaaldBedrag += Number(b.bedrag||0);
+    html += `
+    <div class="bel" style="border-left-color:${c.bar}">
+      <div class="bel-top">
+        <div style="min-width:0">
+          <div class="bel-makelaar">${esc(b.gevende_makelaar||'Onbekende makelaar')}</div>
+          <div class="bel-klant">Lead: ${esc(b.klant_naam||'')}${b.adres ? ' &middot; '+esc(b.adres) : ''}</div>
+          <div class="bel-meta">${b.factuurnummer ? esc(b.factuurnummer)+' &middot; ' : ''}aangemaakt ${datumNL(b.aangemaakt_op)}</div>
+        </div>
+        <div class="bel-rechts">
+          <span class="chip" style="background:${c.bg};color:${c.tx}">${c.label}</span>
+          <div class="bel-bedrag">${euro(b.bedrag)}</div>
+        </div>
+      </div>
+      <div class="acties">${actiesHtml(b)}</div>
+    </div>`;
+  }
+  if(!beloningen.length) html = '<div class="leeg">Nog geen beloningen. Klik op &ldquo;Scan nieuwe deals&rdquo; om pool-deals op te halen.</div>';
+  document.getElementById('lijst').innerHTML = html;
+
+  document.getElementById('totalen').innerHTML = `
+    <div class="tot accent">
+      <div class="tot-label">Openstaand</div>
+      <div class="tot-getal">${euro(openBedrag)}</div>
+      <div class="tot-klein">concept + bevestigd</div>
+    </div>
+    <div class="tot">
+      <div class="tot-label">Concept</div>
+      <div class="tot-getal concept">${telling.concept}</div>
+      <div class="tot-klein">te controleren</div>
+    </div>
+    <div class="tot">
+      <div class="tot-label">Uitbetaald</div>
+      <div class="tot-getal uitbetaald">${euro(uitbetaaldBedrag)}</div>
+      <div class="tot-klein">${telling.uitbetaald} ${telling.uitbetaald===1?'beloning':'beloningen'}</div>
+    </div>`;
+}
+
+async function zet(id, status){
+  const b = beloningen.find(x=>x.id===id);
+  const oud = b ? b.status : null;
+  if(b) b.status = status;
+  render();
+  try{
+    await api({action:'status', id, status});
+    toast('Bijgewerkt');
+  }catch(e){
+    if(b) b.status = oud; render();
+    toast('Bijwerken mislukt: '+e.message, true);
+  }
+}
+
+if(sessionStorage.getItem('fin_auth')==='1'){ toonApp(); }
+else { document.getElementById('ww').focus(); }
+</script>
+</body>
+</html>
