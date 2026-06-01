@@ -1,15 +1,13 @@
 // MVA Intelligence — Finance-module
-// Netlify Function: levert Grootboek detail + controletotalen uit het
-// finance-schema van Supabase. Gebruikt de service-role-key (server-side,
-// nooit in de browser). Gated met een eenvoudige token tot de centrale
-// inlog erop zit.
+// Netlify Function: levert Grootboek detail + controletotalen.
+// Roept twee SECURITY DEFINER-functies aan in het public-schema
+// (public.api_finance_grootboek / public.api_finance_controle), die alleen
+// de service-role mag uitvoeren. Het finance-schema blijft dicht voor de API.
 //
 // Vereiste Netlify environment variables:
 //   SUPABASE_URL          bv. https://ehqtyhoeubchcwfavdzr.supabase.co
 //   SUPABASE_SERVICE_KEY  de service-role / secret key (NIET de publishable)
 //   FINANCE_TOKEN         vrij te kiezen wachtwoord voor toegang tot deze pagina
-//
-// Vereist ook: schema "finance" toegevoegd aan Exposed schemas (API-settings).
 
 exports.handler = async (event) => {
   const cors = {
@@ -30,20 +28,20 @@ exports.handler = async (event) => {
     return json(401, cors, { error: "Geen toegang." });
   }
 
-  const base = SUPABASE_URL.replace(/\/+$/, "") + "/rest/v1";
+  const base = SUPABASE_URL.replace(/\/+$/, "") + "/rest/v1/rpc";
   const headers = {
     apikey: SUPABASE_SERVICE_KEY,
     Authorization: "Bearer " + SUPABASE_SERVICE_KEY,
-    "Accept-Profile": "finance",
+    "content-type": "application/json",
   };
 
   try {
     const [gdRes, ctRes] = await Promise.all([
-      fetch(`${base}/grootboek_detail?select=*&order=entiteit.asc,gb_nr.asc`, { headers }),
-      fetch(`${base}/controle_eindtotalen?select=*`, { headers }),
+      fetch(`${base}/api_finance_grootboek`, { method: "POST", headers, body: "{}" }),
+      fetch(`${base}/api_finance_controle`, { method: "POST", headers, body: "{}" }),
     ]);
-    if (!gdRes.ok) throw new Error("grootboek_detail " + gdRes.status + ": " + (await gdRes.text()));
-    if (!ctRes.ok) throw new Error("controle_eindtotalen " + ctRes.status + ": " + (await ctRes.text()));
+    if (!gdRes.ok) throw new Error("api_finance_grootboek " + gdRes.status + ": " + (await gdRes.text()));
+    if (!ctRes.ok) throw new Error("api_finance_controle " + ctRes.status + ": " + (await ctRes.text()));
 
     const rows = await gdRes.json();
     const controle = await ctRes.json();
