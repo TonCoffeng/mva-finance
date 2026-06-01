@@ -1,0 +1,310 @@
+<!doctype html>
+<html lang="nl">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Begroting 2026 — MVA Finance</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,500;9..144,600&family=Public+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --paper:#f4f1ea; --card:#fbf9f4; --ink:#1c1b18; --muted:#6f6a60;
+    --line:#e3ddd0; --line2:#d6cfbd;
+    --navy:#16324f; --navy-soft:#2c4b6b;
+    --gold:#b08d3f; --pos:#1f7a4d; --neg:#b3261e;
+    --rad:14px;
+  }
+  *{box-sizing:border-box}
+  html,body{margin:0}
+  body{
+    background:radial-gradient(1200px 600px at 100% -10%, #ffffff6e, transparent), var(--paper);
+    color:var(--ink); font-family:"Public Sans",-apple-system,sans-serif; font-size:15px; line-height:1.5;
+    -webkit-font-smoothing:antialiased;
+  }
+  .num{font-variant-numeric:tabular-nums lining-nums}
+  .wrap{max-width:1180px;margin:0 auto;padding:32px 24px 80px}
+  header.top{display:flex;flex-wrap:wrap;align-items:flex-end;justify-content:space-between;gap:18px;
+    padding-bottom:18px;border-bottom:2px solid var(--navy);margin-bottom:6px}
+  .brand{font:600 12px/1 "Public Sans";letter-spacing:.22em;text-transform:uppercase;color:var(--navy-soft)}
+  h1{font-family:"Fraunces",serif;font-weight:500;font-size:40px;line-height:1.02;margin:8px 0 0;letter-spacing:-.01em}
+  .peil{font-size:13px;color:var(--muted)}
+  .peil b{color:var(--ink);font-weight:600}
+  .goldrule{height:3px;background:linear-gradient(90deg,var(--gold),transparent 60%);margin:0 0 18px}
+
+  .note{display:flex;flex-wrap:wrap;align-items:center;gap:10px;justify-content:space-between;
+    background:#fbf3e0;border:1px solid #ecd9a8;border-radius:12px;padding:11px 15px;margin:0 0 18px;font-size:13px;color:#6a5520}
+  .note .reset{appearance:none;border:1px solid var(--line2);background:#fff;color:var(--navy);
+    font:600 12px/1 "Public Sans";padding:8px 14px;border-radius:999px;cursor:pointer}
+  .note .reset:hover{border-color:var(--navy-soft)}
+
+  .tabs{display:flex;gap:8px;margin:0 0 18px}
+  .tab{appearance:none;border:1px solid var(--line2);background:var(--card);color:var(--navy);
+    font:600 13px/1 "Public Sans";letter-spacing:.04em;padding:9px 18px;border-radius:999px;cursor:pointer;transition:.18s}
+  .tab:hover{border-color:var(--navy-soft)}
+  .tab[aria-selected="true"]{background:var(--navy);color:#fff;border-color:var(--navy)}
+
+  .card{background:var(--card);border:1px solid var(--line);border-radius:var(--rad);overflow:hidden;
+    box-shadow:0 1px 0 #fff inset, 0 18px 40px -28px #1c1b1840}
+  .cardhead{display:flex;flex-wrap:wrap;justify-content:space-between;align-items:center;gap:14px;
+    padding:16px 20px;border-bottom:1px solid var(--line)}
+  .cardhead .name{font-family:"Fraunces",serif;font-size:21px;font-weight:600}
+  .result{display:flex;align-items:baseline;gap:12px}
+  .result .lbl{font:600 11px/1 "Public Sans";letter-spacing:.08em;text-transform:uppercase;color:var(--muted)}
+  .result .val{font-family:"Fraunces",serif;font-size:22px;font-weight:600}
+  .result .delta{font-size:12.5px;color:var(--muted)}
+
+  table{width:100%;border-collapse:collapse}
+  thead th{position:sticky;top:0;background:#f0ece2;color:var(--muted);
+    font:600 11px/1.2 "Public Sans";letter-spacing:.08em;text-transform:uppercase;text-align:right;
+    padding:11px 14px;border-bottom:1px solid var(--line2);white-space:nowrap;z-index:1}
+  thead th.l{text-align:left}
+  .catrow td{background:#efe9dc;color:var(--navy);font:600 11px/1 "Public Sans";letter-spacing:.1em;
+    text-transform:uppercase;padding:10px 14px;border-top:1px solid var(--line2);border-bottom:1px solid var(--line2)}
+  .subrow td{background:#f7f3ea;font-weight:700;border-bottom:1px solid var(--line2);text-align:right;padding:8px 14px}
+  .subrow td.l{text-align:left;color:var(--muted);font-weight:600;letter-spacing:.02em}
+  tbody td{padding:7px 14px;border-bottom:1px solid var(--line);text-align:right;white-space:nowrap;vertical-align:top}
+  tbody td.l{text-align:left;white-space:normal}
+  tbody tr:hover td{background:#fff7e9}
+  .gb{color:var(--navy-soft);font-weight:600}
+  .oms{color:var(--ink)}
+  .logica{color:var(--muted);font-size:12px;font-style:italic;white-space:normal;max-width:320px}
+  .ref{color:var(--muted)}
+  .neg{color:var(--neg)}
+  .binput{width:118px;text-align:right;padding:6px 9px;border:1px solid var(--line2);border-radius:8px;
+    background:#fff;font:500 14px/1 "Public Sans";font-variant-numeric:tabular-nums;color:var(--ink)}
+  .binput:focus{outline:none;border-color:var(--navy-soft);box-shadow:0 0 0 3px #16324f1a}
+  .binput.changed{border-color:var(--gold);background:#fffaef}
+  .binput.neg{color:var(--neg)}
+  tfoot td{padding:14px;font-weight:700;border-top:2px solid var(--navy);text-align:right;background:#f0ece2}
+  tfoot td.l{text-align:left;font-family:"Fraunces",serif;font-size:16px}
+
+  .cons{display:flex;flex-wrap:wrap;justify-content:space-between;align-items:center;gap:14px;margin:18px 2px 0;
+    padding:16px 20px;background:var(--card);border:1px solid var(--line);border-radius:var(--rad)}
+  .cons .lbl{font-family:"Fraunces",serif;font-size:18px;font-weight:600}
+  .cons .val{font-family:"Fraunces",serif;font-size:26px;font-weight:600}
+  .cons .sub{font-size:12.5px;color:var(--muted)}
+
+  .state{max-width:440px;margin:9vh auto;background:var(--card);border:1px solid var(--line);
+    border-radius:18px;padding:30px 28px;box-shadow:0 24px 60px -36px #1c1b1855}
+  .state h2{font-family:"Fraunces",serif;font-weight:600;margin:0 0 6px;font-size:24px}
+  .state p{color:var(--muted);margin:0 0 18px;font-size:14px}
+  .state label{display:block;font:600 12px/1 "Public Sans";letter-spacing:.04em;color:var(--navy-soft);margin:0 0 7px;text-transform:uppercase}
+  .state input{width:100%;padding:12px 14px;border:1px solid var(--line2);border-radius:10px;background:#fff;font-size:15px}
+  .state button{margin-top:14px;width:100%;padding:12px;border:0;border-radius:10px;background:var(--navy);color:#fff;
+    font:600 14px/1 "Public Sans";letter-spacing:.03em;cursor:pointer}
+  .state button:hover{background:#0f2740}
+  .err{color:var(--neg);font-size:13px;margin-top:10px;min-height:16px}
+  .hidden{display:none!important}
+  .spin{width:30px;height:30px;border:3px solid var(--line2);border-top-color:var(--navy);border-radius:50%;
+    margin:0 auto;animation:r .8s linear infinite}
+  @keyframes r{to{transform:rotate(360deg)}}
+  footer{margin-top:26px;color:var(--muted);font-size:12px;text-align:center}
+</style>
+</head>
+<body>
+
+<div id="lock" class="state">
+  <h2>Finance · Begroting 2026</h2>
+  <p>Interne module van MVA Intelligence. Voer de toegangscode in.</p>
+  <label for="tok">Toegangscode</label>
+  <input id="tok" type="password" autocomplete="off" placeholder="••••••••" />
+  <button id="enter">Openen</button>
+  <div id="lockerr" class="err"></div>
+</div>
+
+<div id="loading" class="state hidden">
+  <div class="spin"></div>
+  <p style="text-align:center;margin-top:16px">Begroting ophalen…</p>
+</div>
+
+<div id="app" class="wrap hidden">
+  <header class="top">
+    <div>
+      <div class="brand">MVA Intelligence · Finance</div>
+      <h1>Begroting 2026</h1>
+    </div>
+    <div class="peil" id="peil"></div>
+  </header>
+  <div class="goldrule"></div>
+
+  <div class="note">
+    <span>Je past de begrote bedragen hier per grootboekrekening aan; subtotalen en resultaat rekenen meteen mee. <b>Aanpassingen worden in deze stap nog niet bewaard</b> — opslaan in de database volgt als losse vervolgstap.</span>
+    <button class="reset" id="reset">Herstel naar begroting</button>
+  </div>
+
+  <div class="tabs" id="tabs" role="tablist">
+    <button class="tab" role="tab" data-ent="PRO" aria-selected="true">Pro Vastgoedgroep</button>
+    <button class="tab" role="tab" data-ent="VZ" aria-selected="false">Vastgoedzaak</button>
+  </div>
+
+  <div class="card">
+    <div class="cardhead">
+      <div class="name" id="entName"></div>
+      <div class="result">
+        <span class="lbl">Resultaat begroot</span>
+        <span class="val" id="entResult"></span>
+        <span class="delta" id="entDelta"></span>
+      </div>
+    </div>
+    <div style="overflow:auto">
+      <table>
+        <thead>
+          <tr>
+            <th class="l">GB</th>
+            <th class="l">Omschrijving</th>
+            <th>2025</th>
+            <th>2026 YTD</th>
+            <th>2026 begroot</th>
+            <th class="l">Logica</th>
+          </tr>
+        </thead>
+        <tbody id="tbody"></tbody>
+      </table>
+    </div>
+  </div>
+
+  <div class="cons">
+    <div>
+      <div class="lbl">Geconsolideerd resultaat begroot 2026</div>
+      <div class="sub" id="consSub"></div>
+    </div>
+    <div class="val" id="consVal"></div>
+  </div>
+
+  <footer id="foot"></footer>
+</div>
+
+<script>
+const FN = "/.netlify/functions/finance-begroting";
+let TOKEN="", DATA=null, ROWS=[], BASE={PRO:0,VZ:0}, CURRENT="PRO";
+const $=(id)=>document.getElementById(id);
+const eur=new Intl.NumberFormat("nl-NL",{style:"currency",currency:"EUR"});
+const show=el=>el.classList.remove("hidden"), hide=el=>el.classList.add("hidden");
+
+$("enter").addEventListener("click",submit);
+$("tok").addEventListener("keydown",e=>{if(e.key==="Enter")submit();});
+$("reset").addEventListener("click",resetBudget);
+
+async function submit(){
+  const t=$("tok").value.trim();
+  if(!t){$("lockerr").textContent="Vul de toegangscode in.";return;}
+  TOKEN=t; $("lockerr").textContent="";
+  hide($("lock")); show($("loading"));
+  try{
+    const res=await fetch(FN,{headers:{"x-finance-token":TOKEN}});
+    if(res.status===401) throw new Error("Onjuiste toegangscode.");
+    if(!res.ok){const j=await res.json().catch(()=>({}));throw new Error(j.error||("Serverfout "+res.status));}
+    DATA=await res.json();
+    ROWS=DATA.rows.map((r,i)=>({...r,_i:i,begroot:r.begroot==null?null:Number(r.begroot)}));
+    BASE=DATA.baseline||{PRO:0,VZ:0};
+    hide($("loading")); show($("app"));
+    const p=DATA.peil||{};
+    $("peil").innerHTML=`Referentie &nbsp;<b>${fmtDate(p.v2025)}</b> &nbsp;·&nbsp; YTD <b>${fmtDate(p.ytd)}</b>`;
+    render();
+  }catch(e){ hide($("loading")); show($("lock")); $("lockerr").textContent=e.message||String(e); }
+}
+
+function resetBudget(){
+  ROWS=DATA.rows.map((r,i)=>({...r,_i:i,begroot:r.begroot==null?null:Number(r.begroot)}));
+  render();
+}
+
+function entSum(ent){ return ROWS.filter(r=>r.entiteit===ent).reduce((a,r)=>a+(r.begroot||0),0); }
+
+function setTabs(){
+  document.querySelectorAll(".tab").forEach(t=>{
+    const on=t.dataset.ent===CURRENT;
+    t.setAttribute("aria-selected",on?"true":"false");
+    t.onclick=()=>{CURRENT=t.dataset.ent; render();};
+  });
+}
+
+function render(){
+  setTabs();
+  const entName=CURRENT==="PRO"?"Pro Vastgoedgroep B.V.":"Vastgoedzaak B.V.";
+  $("entName").textContent=entName;
+  const rows=ROWS.filter(r=>r.entiteit===CURRENT);
+
+  const order=[]; const groups={};
+  for(const r of rows){ const b=r.blok||"Overig"; if(!groups[b]){groups[b]=[];order.push(b);} groups[b].push(r); }
+
+  let html="";
+  for(const blok of order){
+    html+=`<tr class="catrow"><td colspan="6" class="l">${esc(blok)}</td></tr>`;
+    let bsum=0;
+    for(const r of groups[blok]){
+      bsum+=(r.begroot||0);
+      const v25=r.v2025, vy=r.vytd;
+      const bval=r.begroot;
+      const negCls=(bval!=null && bval<0)?"neg":"";
+      html+=`<tr>
+        <td class="l gb num">${esc(r.gb_nr)}</td>
+        <td class="l oms">${esc(r.omschrijving||"")}</td>
+        <td class="num ref">${refCell(v25)}</td>
+        <td class="num ref">${refCell(vy)}</td>
+        <td><input class="binput num ${negCls}" data-i="${r._i}" type="number" step="1"
+             value="${bval==null?"":bval}" placeholder="0" /></td>
+        <td class="l logica">${esc(r.logica||"")}</td>
+      </tr>`;
+    }
+    html+=`<tr class="subrow"><td class="l" colspan="4">Subtotaal ${esc(blok)}</td>
+      <td class="num ${bsum<0?'neg':''}">${eur.format(bsum)}</td><td></td></tr>`;
+  }
+  $("tbody").innerHTML=html;
+
+  document.querySelectorAll(".binput").forEach(inp=>{
+    inp.addEventListener("input",()=>{
+      const i=+inp.dataset.i;
+      const v=inp.value.trim();
+      ROWS[i].begroot = v===""?null:Number(v);
+      inp.classList.toggle("neg", ROWS[i].begroot!=null && ROWS[i].begroot<0);
+      const orig=DATA.rows[i].begroot;
+      const changed = (Number(orig)||0) !== (ROWS[i].begroot||0);
+      inp.classList.toggle("changed", changed);
+      updateTotals();
+      // subtotaal van het blok live bijwerken zonder volledige rerender:
+      refreshSubtotals();
+    });
+  });
+
+  updateTotals();
+}
+
+function refreshSubtotals(){
+  // herbereken subtotaalrijen op basis van huidige ROWS, voor het actieve tabblad
+  const rows=ROWS.filter(r=>r.entiteit===CURRENT);
+  const subById={};
+  for(const r of rows){ const b=r.blok||"Overig"; subById[b]=(subById[b]||0)+(r.begroot||0); }
+  let idx=0;
+  document.querySelectorAll("#tbody tr").forEach(tr=>{});
+  // eenvoudiger: loop blokken in volgorde
+  const order=[]; for(const r of rows){const b=r.blok||"Overig"; if(!order.includes(b))order.push(b);}
+  const subCells=document.querySelectorAll("#tbody tr.subrow td.num");
+  order.forEach((b,k)=>{
+    const cell=subCells[k];
+    if(cell){ const v=subById[b]; cell.textContent=eur.format(v); cell.classList.toggle("neg",v<0); }
+  });
+}
+
+function updateTotals(){
+  const cur=entSum(CURRENT);
+  $("entResult").textContent=eur.format(cur);
+  $("entResult").classList.toggle("neg",cur<0);
+  const base=BASE[CURRENT]||0;
+  const d=cur-base;
+  $("entDelta").textContent = Math.abs(d)<0.005 ? "gelijk aan begroting" : `${d>0?"+":""}${eur.format(d)} t.o.v. begroting`;
+
+  const P=entSum("PRO"), V=entSum("VZ"), tot=P+V;
+  $("consVal").textContent=eur.format(tot);
+  $("consVal").style.color = tot<0 ? "var(--neg)" : "var(--ink)";
+  $("consSub").innerHTML=`Pro <b>${eur.format(P)}</b> &nbsp;+&nbsp; VGZ <b>${eur.format(V)}</b>`;
+  $("foot").textContent="Startwaarden uit Begroting 2026 (sluit op €45.466,02). Realisatie blijft SnelStart; dit is de stuurlaag.";
+}
+
+function refCell(v){ if(v==null||Math.abs(v)<0.005) return "—"; const c=v<0?'neg':''; return `<span class="${c}">${eur.format(v)}</span>`; }
+function fmtDate(s){ if(!s) return "—"; const [y,m,d]=String(s).split("-"); return `${d}-${m}-${y}`; }
+function esc(s){ return String(s).replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c])); }
+</script>
+</body>
+</html>
