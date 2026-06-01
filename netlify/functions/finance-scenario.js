@@ -2,12 +2,17 @@
 // Netlify Function: bewaart en laadt scenario's via Netlify Blobs.
 // Geen externe database nodig — opslag zit in Netlify zelf.
 //
-// GET  (x-finance-token)            -> { scenarios:[{id,naam,ts}] }      (lijst)
-// GET  ?id=<id> (x-finance-token)   -> { id, naam, payload, ts }         (laden)
-// POST { naam, payload } (token)    -> { id, naam, ts }                  (opslaan)
+// GET  (x-finance-token)            -> { scenarios:[{id,naam,ts}] }   (lijst, opgebouwd uit de opslag)
+// GET  ?id=<id> (x-finance-token)   -> { id, naam, payload, ts }      (laden)
+// POST { naam, payload } (token)    -> { id, naam, ts }               (opslaan)
 // DELETE ?id=<id> (token)           -> { ok:true }
 //
+// Robuust: geen aparte index-blob (die kon racen). De lijst wordt elke keer
+// rechtstreeks uit de opgeslagen scenario's opgebouwd.
+//
 // Vereiste env var: FINANCE_TOKEN
+
+const PREFIX = "scn_";
 
 exports.handler = async (event) => {
   const cors = {
@@ -30,23 +35,26 @@ exports.handler = async (event) => {
     return json(500, cors, { error: "Opslag niet beschikbaar: " + String((e && e.message) || e) });
   }
 
-  const INDEX = "index";
-  const readIndex = async () => {
-    try { const v = await store.get(INDEX, { type: "json" }); return Array.isArray(v) ? v : []; }
-    catch { return []; }
-  };
-
   try {
     if (event.httpMethod === "GET") {
       const id = event.queryStringParameters && event.queryStringParameters.id;
       if (id) {
-        const rec = await store.get("scn_" + id, { type: "json" });
+        const rec = await store.get(PREFIX + id, { type: "json" });
         if (!rec) return json(404, cors, { error: "Scenario niet gevonden." });
         return json(200, cors, rec);
       }
-      const idx = await readIndex();
-      idx.sort((a, b) => (b.ts || 0) - (a.ts || 0));
-      return json(200, cors, { scenarios: idx });
+      // lijst: bouw rechtstreeks op uit alle scn_-blobs
+      const listing = await store.list({ prefix: PREFIX });
+      const blobs = (listing && listing.blobs) || [];
+      const scenarios = [];
+      for (const b of blobs) {
+        try {
+          const rec = await store.get(b.key, { type: "json" });
+          if (rec && rec.id) scenarios.push({ id: rec.id, naam: rec.naam, ts: rec.ts });
+        } catch (_) { /* sla onleesbare over */ }
+      }
+      scenarios.sort((a, b) => (b.ts || 0) - (a.ts || 0));
+      return json(200, cors, { scenarios });
     }
 
     if (event.httpMethod === "POST") {
@@ -55,21 +63,14 @@ exports.handler = async (event) => {
       const payload = body.payload || {};
       const id = body.id || (Date.now().toString(36) + Math.random().toString(36).slice(2, 6));
       const ts = Date.now();
-      const rec = { id, naam, payload, ts };
-      await store.setJSON("scn_" + id, rec);
-      const idx = await readIndex();
-      const without = idx.filter((x) => x.id !== id);
-      without.push({ id, naam, ts });
-      await store.setJSON(INDEX, without);
+      await store.setJSON(PREFIX + id, { id, naam, payload, ts });
       return json(200, cors, { id, naam, ts });
     }
 
     if (event.httpMethod === "DELETE") {
       const id = event.queryStringParameters && event.queryStringParameters.id;
       if (!id) return json(400, cors, { error: "Geen id." });
-      await store.delete("scn_" + id);
-      const idx = await readIndex();
-      await store.setJSON(INDEX, idx.filter((x) => x.id !== id));
+      await store.delete(PREFIX + id);
       return json(200, cors, { ok: true });
     }
 
