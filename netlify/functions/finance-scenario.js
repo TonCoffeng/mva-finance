@@ -23,7 +23,8 @@ exports.handler = async (event) => {
 
   let store;
   try {
-    const { getStore } = await import("@netlify/blobs");
+    const { getStore, connectLambda } = await import("@netlify/blobs");
+    connectLambda(event);            // koppelt Blobs-context aan deze aanvraag (Lambda-stijl functie)
     store = getStore("finance-scenarios");
   } catch (e) {
     return json(500, cors, { error: "Opslag niet beschikbaar: " + String((e && e.message) || e) });
