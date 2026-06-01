@@ -6,93 +6,103 @@
 <title>Scenario — MVA Finance</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,500;9..144,600&family=Public+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
 <style>
   :root{
-    --paper:#f4f1ea; --card:#fbf9f4; --ink:#1c1b18; --muted:#6f6a60;
-    --line:#e3ddd0; --line2:#d6cfbd; --navy:#16324f; --navy-soft:#2c4b6b;
-    --gold:#b08d3f; --pos:#1f7a4d; --neg:#b3261e; --rad:14px;
+    --bg:#f6f7f9; --card:#ffffff; --ink:#0f172a; --muted:#64748b; --faint:#94a3b8;
+    --line:#e6e9ef; --line2:#d4d9e3; --navy:#0f3d5c; --navy2:#1c5478;
+    --accent:#0e7490; --pos:#15803d; --neg:#b91c1c; --warn:#b45309;
+    --chipbg:#eef2f7; --rad:12px;
   }
   *{box-sizing:border-box} html,body{margin:0}
-  body{background:radial-gradient(1200px 600px at 100% -10%, #ffffff6e, transparent), var(--paper);
-    color:var(--ink);font-family:"Public Sans",-apple-system,sans-serif;font-size:15px;line-height:1.5;-webkit-font-smoothing:antialiased}
+  body{background:var(--bg);color:var(--ink);font-family:"Inter",-apple-system,sans-serif;font-size:14px;line-height:1.45;-webkit-font-smoothing:antialiased}
   .num{font-variant-numeric:tabular-nums lining-nums}
-  .wrap{max-width:1180px;margin:0 auto;padding:32px 24px 80px}
-  header.top{display:flex;flex-wrap:wrap;align-items:flex-end;justify-content:space-between;gap:18px;padding-bottom:16px;border-bottom:2px solid var(--navy)}
-  .brand{font:600 12px/1 "Public Sans";letter-spacing:.22em;text-transform:uppercase;color:var(--navy-soft)}
-  h1{font-family:"Fraunces",serif;font-weight:500;font-size:40px;line-height:1.02;margin:8px 0 0;letter-spacing:-.01em}
-  .nav{display:flex;gap:8px;margin:14px 0 0}
-  .nav a{text-decoration:none;border:1px solid var(--line2);background:var(--card);color:var(--navy);
-    font:600 13px/1 "Public Sans";letter-spacing:.03em;padding:9px 16px;border-radius:999px;transition:.16s}
-  .nav a:hover{border-color:var(--navy-soft)}
-  .nav a.active{background:var(--navy);color:#fff;border-color:var(--navy)}
-  .goldrule{height:3px;background:linear-gradient(90deg,var(--gold),transparent 60%);margin:16px 0 18px}
+  .wrap{max-width:1240px;margin:0 auto;padding:26px 22px 90px}
+  header.top{display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:16px;border-bottom:1px solid var(--line);padding-bottom:16px}
+  .brand{font-size:11px;letter-spacing:.16em;text-transform:uppercase;color:var(--faint);font-weight:600}
+  h1{font-size:25px;font-weight:700;margin:4px 0 0;letter-spacing:-.02em}
+  .nav{display:flex;gap:6px}
+  .nav a{text-decoration:none;border:1px solid var(--line2);background:#fff;color:var(--navy);font-size:13px;font-weight:600;padding:8px 14px;border-radius:8px;transition:.15s}
+  .nav a:hover{border-color:var(--navy2)} .nav a.active{background:var(--navy);color:#fff;border-color:var(--navy)}
 
   /* RESULTAATBALK */
-  .results{position:sticky;top:0;z-index:5;display:grid;grid-template-columns:1fr 1fr 1.4fr 1fr;gap:1px;
-    background:var(--line2);border:1px solid var(--line2);border-radius:var(--rad);overflow:hidden;margin-bottom:20px;
-    box-shadow:0 18px 40px -28px #1c1b1840}
-  .stat{background:var(--card);padding:16px 18px}
-  .stat.big{background:var(--navy);color:#fff}
-  .stat .lbl{font:600 11px/1 "Public Sans";letter-spacing:.09em;text-transform:uppercase;color:var(--muted)}
-  .stat.big .lbl{color:#b9c6d4}
-  .stat .v{font-family:"Fraunces",serif;font-weight:600;font-size:24px;margin-top:6px}
-  .stat.big .v{font-size:30px}
-  .stat .v.neg{color:var(--neg)} .stat.big .v.neg{color:#ffb3ab}
-  .stat .sub{font-size:12px;color:var(--muted);margin-top:3px} .stat.big .sub{color:#9fb1c2}
+  .band{display:grid;grid-template-columns:1fr 1fr 1.25fr;gap:14px;margin:22px 0}
+  .rc{background:var(--card);border:1px solid var(--line);border-radius:var(--rad);padding:16px 18px}
+  .rc.samen{background:var(--navy);color:#fff;border-color:var(--navy)}
+  .rc .t{font-size:11px;letter-spacing:.1em;text-transform:uppercase;color:var(--muted);font-weight:600}
+  .rc.samen .t{color:#9fc3da}
+  .rc .v{font-size:27px;font-weight:700;margin-top:6px;letter-spacing:-.02em}
+  .rc.samen .v{font-size:32px}
+  .rc .v.neg{color:var(--neg)} .rc.samen .v.neg{color:#fda4a4}
+  .rc .ref{font-size:11.5px;color:var(--muted);margin-top:8px;display:flex;gap:14px;flex-wrap:wrap}
+  .rc.samen .ref{color:#9fc3da}
+  .rc .ref b{font-weight:600;color:var(--ink)} .rc.samen .ref b{color:#fff}
 
-  .card{background:var(--card);border:1px solid var(--line);border-radius:var(--rad);overflow:hidden;margin-bottom:20px;
-    box-shadow:0 1px 0 #fff inset, 0 18px 40px -28px #1c1b1840}
-  .cardhead{padding:14px 20px;border-bottom:1px solid var(--line);display:flex;flex-wrap:wrap;justify-content:space-between;align-items:center;gap:12px}
-  .cardhead .name{font-family:"Fraunces",serif;font-size:20px;font-weight:600}
-  .presets{display:flex;gap:8px;flex-wrap:wrap}
-  .preset{appearance:none;border:1px solid var(--line2);background:#fff;color:var(--navy);font:600 12px/1 "Public Sans";
-    padding:8px 13px;border-radius:999px;cursor:pointer} .preset:hover{border-color:var(--gold);background:#fffaef}
-
-  .knobs{display:grid;grid-template-columns:repeat(auto-fit,minmax(210px,1fr));gap:18px;padding:20px}
-  .knob label{display:block;font:600 11px/1 "Public Sans";letter-spacing:.05em;text-transform:uppercase;color:var(--navy-soft);margin-bottom:8px}
-  .knob .row{display:flex;align-items:center;gap:10px}
-  .knob input[type=range]{flex:1;accent-color:var(--navy)}
-  .knob input[type=number]{width:100%;padding:9px 11px;border:1px solid var(--line2);border-radius:9px;background:#fff;font:500 15px "Public Sans";font-variant-numeric:tabular-nums}
-  .knob .val{min-width:64px;text-align:right;font:600 14px "Public Sans";font-variant-numeric:tabular-nums;color:var(--ink)}
-  .toggle{display:inline-flex;align-items:center;gap:9px;cursor:pointer;user-select:none}
-  .toggle input{position:absolute;opacity:0} .switch{width:42px;height:24px;border-radius:999px;background:var(--line2);position:relative;transition:.16s}
-  .switch::after{content:"";position:absolute;top:2px;left:2px;width:20px;height:20px;border-radius:50%;background:#fff;transition:.16s;box-shadow:0 1px 3px #0003}
-  .toggle input:checked + .switch{background:var(--navy)} .toggle input:checked + .switch::after{transform:translateX(18px)}
+  .card{background:var(--card);border:1px solid var(--line);border-radius:var(--rad);margin-bottom:18px;overflow:hidden}
+  .ch{display:flex;flex-wrap:wrap;justify-content:space-between;align-items:center;gap:12px;padding:14px 18px;border-bottom:1px solid var(--line)}
+  .ch h2{font-size:15px;font-weight:700;margin:0}
+  .ch .sub{font-size:12px;color:var(--muted)}
+  .btn{appearance:none;border:1px solid var(--line2);background:#fff;color:var(--navy);font-size:12.5px;font-weight:600;padding:8px 13px;border-radius:8px;cursor:pointer}
+  .btn:hover{border-color:var(--navy2)} .btn.pri{background:var(--navy);color:#fff;border-color:var(--navy)} .btn.pri:hover{background:#0a2f47}
+  .btn.sm{padding:5px 9px;font-size:12px}
+  .btn.danger{color:var(--neg);border-color:#f1c4c4}
 
   table{width:100%;border-collapse:collapse}
-  thead th{background:#f0ece2;color:var(--muted);font:600 11px/1.2 "Public Sans";letter-spacing:.07em;text-transform:uppercase;
-    text-align:right;padding:11px 14px;border-bottom:1px solid var(--line2);white-space:nowrap}
+  thead th{background:#f8fafc;color:var(--muted);font-size:10.5px;letter-spacing:.06em;text-transform:uppercase;font-weight:600;text-align:right;padding:9px 12px;border-bottom:1px solid var(--line);white-space:nowrap}
   thead th.l{text-align:left}
-  tbody td{padding:8px 14px;border-bottom:1px solid var(--line);text-align:right;white-space:nowrap;font-variant-numeric:tabular-nums}
+  tbody td{padding:7px 12px;border-bottom:1px solid var(--line);text-align:right;white-space:nowrap;vertical-align:middle}
   tbody td.l{text-align:left}
-  tbody tr.off td{opacity:.4}
-  tbody tr:hover td{background:#fff7e9}
-  .mak{font-weight:600;color:var(--ink)}
-  .mini{width:66px;text-align:right;padding:5px 7px;border:1px solid var(--line2);border-radius:7px;background:#fff;font:500 13px "Public Sans";font-variant-numeric:tabular-nums}
-  .calc{color:var(--navy-soft);font-weight:600}
-  tfoot td{padding:12px 14px;font-weight:700;border-top:2px solid var(--navy);background:#f0ece2;text-align:right;font-variant-numeric:tabular-nums}
-  tfoot td.l{text-align:left;font-family:"Fraunces",serif;font-size:15px}
+  tr.off td{opacity:.45}
+  .nm{font-weight:600}
+  .chip{display:inline-block;font-size:10.5px;font-weight:600;padding:2px 8px;border-radius:999px;background:var(--chipbg);color:var(--navy2)}
+  .chip.ld{background:#fdebd0;color:var(--warn)}
+  select,input[type=text],input[type=number]{font-family:inherit;font-size:13px;border:1px solid var(--line2);border-radius:7px;background:#fff;padding:6px 8px;color:var(--ink)}
+  input.num{text-align:right;font-variant-numeric:tabular-nums}
+  .omzetcell{display:inline-flex;gap:6px;align-items:center;justify-content:flex-end}
+  .omzetcell input{width:92px}
+  .modebtn{font-size:11px;font-weight:600;border:1px solid var(--line2);background:#fff;border-radius:6px;padding:5px 7px;cursor:pointer;color:var(--accent);min-width:30px}
+  .sw{width:38px;height:22px;border-radius:999px;background:var(--line2);position:relative;transition:.15s;cursor:pointer;display:inline-block;vertical-align:middle}
+  .sw::after{content:"";position:absolute;top:2px;left:2px;width:18px;height:18px;border-radius:50%;background:#fff;transition:.15s;box-shadow:0 1px 2px #0003}
+  .sw.on{background:var(--navy)} .sw.on::after{transform:translateX(16px)}
+  .contrib{font-weight:600}
+  .iconbtn{border:0;background:none;cursor:pointer;color:var(--faint);font-size:15px;padding:2px 6px;border-radius:6px}
+  .iconbtn:hover{color:var(--neg);background:#fdecec}
+  .expandbtn{border:1px solid var(--line2);background:#fff;border-radius:6px;width:24px;height:24px;cursor:pointer;color:var(--navy2);font-weight:700;line-height:1}
+  tr.detail td{background:#f8fafc;padding:0}
+  .detailbox{padding:14px 18px;display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:12px 18px}
+  .fld label{display:block;font-size:10.5px;letter-spacing:.05em;text-transform:uppercase;color:var(--muted);font-weight:600;margin-bottom:4px}
+  .fld input{width:100%}
+  .loonbox{grid-column:1/-1;background:#fff;border:1px solid var(--line);border-radius:8px;padding:10px 12px;display:flex;flex-wrap:wrap;gap:6px 18px;font-size:12px;color:var(--muted)}
+  .loonbox b{color:var(--ink);font-weight:600}
+  .c2025{}
+  .hide2025 .c2025{display:none}
 
-  /* SAVE/LOAD */
-  .saverow{display:flex;flex-wrap:wrap;gap:10px;align-items:center;padding:16px 20px}
-  .saverow input[type=text]{flex:1;min-width:200px;padding:10px 13px;border:1px solid var(--line2);border-radius:9px;background:#fff;font-size:14px}
-  .saverow select{padding:10px 13px;border:1px solid var(--line2);border-radius:9px;background:#fff;font-size:14px;min-width:200px}
-  .btn{appearance:none;border:0;border-radius:9px;padding:10px 16px;font:600 13px/1 "Public Sans";cursor:pointer}
-  .btn.primary{background:var(--navy);color:#fff} .btn.primary:hover{background:#0f2740}
-  .btn.ghost{background:#fff;border:1px solid var(--line2);color:var(--navy)} .btn.ghost:hover{border-color:var(--navy-soft)}
-  .btn.danger{background:#fff;border:1px solid #f0c9c4;color:var(--neg)}
-  .savemsg{font-size:13px;color:var(--muted);min-height:16px;padding:0 20px 14px}
+  .posten{display:grid;grid-template-columns:1fr 1fr;gap:0}
+  .posten .col{padding:14px 18px}
+  .posten .col + .col{border-left:1px solid var(--line)}
+  .posten .col h3{font-size:12px;letter-spacing:.06em;text-transform:uppercase;color:var(--navy2);margin:0 0 10px}
+  .pline{display:flex;align-items:center;gap:8px;margin-bottom:7px}
+  .pline input[type=text]{flex:1;min-width:0}
+  .pline input.num{width:120px}
+  .pline .iconbtn{flex:none}
+  .colsum{margin-top:8px;padding-top:8px;border-top:1px solid var(--line);display:flex;justify-content:space-between;font-weight:700;font-size:13px}
 
-  .state{max-width:440px;margin:9vh auto;background:var(--card);border:1px solid var(--line);border-radius:18px;padding:30px 28px;box-shadow:0 24px 60px -36px #1c1b1855}
-  .state h2{font-family:"Fraunces",serif;font-weight:600;margin:0 0 6px;font-size:24px}
-  .state p{color:var(--muted);margin:0 0 18px;font-size:14px}
-  .state label{display:block;font:600 12px/1 "Public Sans";letter-spacing:.04em;color:var(--navy-soft);margin:0 0 7px;text-transform:uppercase}
-  .state input{width:100%;padding:12px 14px;border:1px solid var(--line2);border-radius:10px;background:#fff;font-size:15px}
-  .state button{margin-top:14px;width:100%;padding:12px;border:0;border-radius:10px;background:var(--navy);color:#fff;font:600 14px/1 "Public Sans";cursor:pointer}
-  .err{color:var(--neg);font-size:13px;margin-top:10px;min-height:16px}
+  .mgmtrow{display:flex;flex-wrap:wrap;align-items:center;gap:12px;padding:14px 18px}
+  .mgmtrow input.num{width:130px} .mgmtrow .note{font-size:12px;color:var(--muted)}
+
+  .saverow{display:flex;flex-wrap:wrap;gap:10px;align-items:center;padding:14px 18px}
+  .saverow input[type=text]{flex:1;min-width:200px} .saverow select{min-width:220px}
+  .savemsg{font-size:12.5px;color:var(--muted);min-height:16px;padding:0 18px 14px}
+
+  .state{max-width:430px;margin:9vh auto;background:var(--card);border:1px solid var(--line);border-radius:14px;padding:28px 26px;box-shadow:0 20px 50px -30px #0f172a40}
+  .state h2{font-size:21px;font-weight:700;margin:0 0 6px}
+  .state p{color:var(--muted);margin:0 0 16px}
+  .state label{display:block;font-size:11px;letter-spacing:.05em;text-transform:uppercase;color:var(--navy2);font-weight:600;margin-bottom:6px}
+  .state input{width:100%;padding:11px 13px;border:1px solid var(--line2);border-radius:9px;font-size:15px}
+  .state button{margin-top:13px;width:100%;padding:11px;border:0;border-radius:9px;background:var(--navy);color:#fff;font-weight:600;font-size:14px;cursor:pointer}
+  .err{color:var(--neg);font-size:13px;margin-top:9px;min-height:16px}
   .hidden{display:none!important}
-  footer{margin-top:22px;color:var(--muted);font-size:12px;text-align:center}
+  footer{margin-top:20px;color:var(--faint);font-size:12px;text-align:center}
 </style>
 </head>
 <body>
@@ -106,248 +116,316 @@
   <div id="lockerr" class="err"></div>
 </div>
 
-<div id="app" class="wrap hidden">
+<div id="app" class="wrap hidden hide2025">
   <header class="top">
-    <div>
-      <div class="brand">MVA Intelligence · Finance</div>
-      <h1>Scenario</h1>
-    </div>
+    <div><div class="brand">MVA Intelligence · Finance</div><h1>Scenario</h1></div>
     <nav class="nav">
-    <a class="active" href="scenario.html">Scenario</a>
-    <a href="begroting.html">Begroting</a>
-    <a href="grootboek.html">Realisatie</a>
-  </nav>
+      <a class="active" href="scenario.html">Scenario</a>
+      <a href="begroting.html">Begroting</a>
+      <a href="grootboek.html">Realisatie</a>
+    </nav>
   </header>
-  <div class="goldrule"></div>
 
-  <div class="results">
-    <div class="stat"><div class="lbl">Resultaat Pro</div><div class="v num" id="rPro">—</div></div>
-    <div class="stat"><div class="lbl">Resultaat VGZ</div><div class="v num" id="rVgz">—</div></div>
-    <div class="stat big"><div class="lbl">Geconsolideerd resultaat</div><div class="v num" id="rCon">—</div><div class="sub" id="rConSub"></div></div>
-    <div class="stat"><div class="lbl">Δ vs basis 2025</div><div class="v num" id="rDelta">—</div><div class="sub">basis € 84.263</div></div>
+  <div class="band">
+    <div class="rc"><div class="t">Resultaat Pro</div><div class="v num" id="rPro">—</div>
+      <div class="ref"><span>2025 <b>€ 67.112</b></span><span>begroot <b>€ 11.556</b></span></div></div>
+    <div class="rc"><div class="t">Resultaat VGZ</div><div class="v num" id="rVgz">—</div>
+      <div class="ref"><span>2025 <b>€ 17.151</b></span><span>begroot <b>€ 33.910</b></span></div></div>
+    <div class="rc samen"><div class="t">Geconsolideerd · Samen</div><div class="v num" id="rSam">—</div>
+      <div class="ref"><span id="dvs25"></span><span id="dvsbg"></span></div></div>
   </div>
 
   <div class="card">
-    <div class="cardhead">
-      <div class="name">Knoppen</div>
-      <div class="presets">
-        <button class="preset" id="pStd">Huidige stand</button>
-        <button class="preset" id="p2026">2026-plan · fee Pro €0 / VGZ €132k</button>
+    <div class="ch">
+      <div><h2>Makelaars</h2><div class="sub" id="makSub"></div></div>
+      <div style="display:flex;gap:8px;align-items:center">
+        <label style="display:inline-flex;align-items:center;gap:7px;font-size:12.5px;color:var(--muted);font-weight:600;cursor:pointer">
+          <span class="sw" id="sw2025"></span> Toon 2025</label>
+        <button class="btn" id="addFr">+ Franchise</button>
+        <button class="btn" id="addLd">+ Loondienst</button>
       </div>
     </div>
-    <div class="knobs">
-      <div class="knob"><label>Omzetgroei blijvers</label><div class="row"><input type="range" id="kGroei" min="-20" max="50" step="1"><span class="val" id="kGroeiV"></span></div></div>
-      <div class="knob"><label>Afdracht-kalibratie</label><div class="row"><input type="range" id="kKal" min="0.8" max="1.3" step="0.0001"><span class="val" id="kKalV"></span></div></div>
-      <div class="knob"><label>Mgmt fee Pro (Ton)</label><input type="number" id="kFeePro" step="1000"></div>
-      <div class="knob"><label>Mgmt fee VGZ (Hans)</label><input type="number" id="kFeeVgz" step="1000"></div>
-      <div class="knob"><label>Techniek / Effytool VGZ</label><input type="number" id="kTech" step="500"></div>
-      <div class="knob"><label>Funda (in Pro)</label><input type="number" id="kFunda" step="500"></div>
-      <div class="knob"><label>Kosten meeschalen met aantal makelaars</label><div class="row" style="margin-top:4px"><label class="toggle"><input type="checkbox" id="kSchaal"><span class="switch"></span><span id="kSchaalV" class="num"></span></label></div></div>
-    </div>
-  </div>
-
-  <div class="card">
-    <div class="cardhead"><div class="name">Makelaars</div><div class="sub" style="color:var(--muted);font-size:13px" id="makSub"></div></div>
     <div style="overflow:auto">
       <table>
         <thead><tr>
-          <th class="l">Makelaar</th><th>Omzet 2025</th><th>Actief</th><th>Regio-afdr. %</th><th>Bijdrage/jr</th><th>Afdracht</th><th>Naar kantoor</th>
+          <th class="l">Makelaar</th><th class="l">Type</th><th>Actief</th>
+          <th class="c2025">Omzet 2025</th><th>Omzet 2026</th><th>Bijdrage resultaat</th><th></th><th></th>
         </tr></thead>
         <tbody id="makBody"></tbody>
-        <tfoot><tr><td class="l" id="makFootL">Totaal</td><td></td><td class="num" id="makCount"></td><td></td><td></td><td class="num" id="makAfdr"></td><td class="num" id="makKant"></td></tr></tfoot>
       </table>
     </div>
   </div>
 
   <div class="card">
-    <div class="cardhead"><div class="name">Scenario bewaren &amp; laden</div></div>
+    <div class="ch"><h2>Vaste lasten &amp; overige posten</h2><div class="sub">Techniek, huur, kostprijs, overige — per entiteit. Pas aan of voeg regels toe.</div></div>
+    <div class="posten">
+      <div class="col"><h3>Pro Vastgoedgroep</h3><div id="postenPro"></div>
+        <button class="btn sm" data-add="pro" style="margin-top:6px">+ regel</button>
+        <div class="colsum"><span>Subtotaal vaste posten Pro</span><span class="num" id="sumPro"></span></div></div>
+      <div class="col"><h3>Vastgoedzaak</h3><div id="postenVgz"></div>
+        <button class="btn sm" data-add="vgz" style="margin-top:6px">+ regel</button>
+        <div class="colsum"><span>Subtotaal vaste posten VGZ</span><span class="num" id="sumVgz"></span></div></div>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="ch"><h2>Managementfee</h2><div class="sub">Eén bedrag, niet uitgesplitst. 2026: volledig in Vastgoedzaak (Ton + Hans).</div></div>
+    <div class="mgmtrow">
+      <span>€</span><input class="num" id="mgmtBedrag" type="number" step="1000">
+      <span>in</span>
+      <select id="mgmtEnt"><option value="VGZ">Vastgoedzaak</option><option value="PRO">Pro</option></select>
+      <span class="note">€132.000 = Ton + Hans à €5.500 × 2 × 12</span>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="ch"><h2>Scenario bewaren &amp; laden</h2></div>
     <div class="saverow">
-      <input type="text" id="scnNaam" placeholder="Naam, bv. '2026 zonder Maurits, fee in VGZ'">
-      <button class="btn primary" id="btnSave">Bewaar scenario</button>
+      <input type="text" id="scnNaam" placeholder="Naam, bv. '2 makelaars loondienst + extra backoffice'">
+      <button class="btn pri" id="btnSave">Bewaar scenario</button>
     </div>
     <div class="saverow" style="padding-top:0">
       <select id="scnList"><option value="">— bewaarde scenario's —</option></select>
-      <button class="btn ghost" id="btnLoad">Laden</button>
+      <button class="btn" id="btnLoad">Laden</button>
       <button class="btn danger" id="btnDel">Verwijderen</button>
     </div>
     <div class="savemsg" id="saveMsg"></div>
   </div>
 
-  <footer>Model sluit 1-op-1 aan op de Scenario-tab. Realisatie blijft SnelStart; dit is de stuurlaag. Opslag via Netlify Blobs.</footer>
+  <footer>Stuurinstrument — los van de realisatie. Elke regel is bewerkbaar; niets is een black box. Opslag via Netlify Blobs.</footer>
 </div>
 
 <script>
-const TOKEN_FN="/.netlify/functions/finance-scenario";
+const FN="/.netlify/functions/finance-scenario";
 let TOKEN="";
 const $=id=>document.getElementById(id);
-const eur=new Intl.NumberFormat("nl-NL",{style:"currency",currency:"EUR",maximumFractionDigits:0});
-const eur2=new Intl.NumberFormat("nl-NL",{style:"currency",currency:"EUR"});
+const eur0=new Intl.NumberFormat("nl-NL",{style:"currency",currency:"EUR",maximumFractionDigits:0});
+const eur=new Intl.NumberFormat("nl-NL",{style:"currency",currency:"EUR"});
 
-// ---- vaste constanten uit de Scenario-tab ----
-const CONST={ proNettoOmzet:94775, proKostprijsBasisExclFunda:246306.21, proFranchiseBetaald:-158644,
-  proOverig:-64468, vgzEigenOmzet:270728, vgzKostprijsExclTech:-(49003.68-44528.86),
-  vgzOverigVast:-(47703.44+18703+13292.36+(110373.14-75000-9.07)+(8171.71+5400.55)+1049.92+561.81),
-  basis2025:84263 };
+const REF={ pro2025:67112, vgz2025:17151, sam2025:84263, proBg:11556, vgzBg:33910, samBg:45466 };
 
 const DEFAULT_MAK=[
- {n:"Rogier de Vries",omzet:274471,actief:1,regio:0.30,bijdrage:21000},
- {n:"Pelle Freijsen",omzet:219224,actief:1,regio:0.30,bijdrage:21000},
- {n:"Jori Netiv",omzet:128338,actief:1,regio:0.30,bijdrage:21000},
- {n:"A10 / 't Gooi",omzet:114354,actief:1,regio:0.10,bijdrage:21000},
- {n:"Maurits van Leeuwen",omzet:83286,actief:0,regio:0.30,bijdrage:21000},
- {n:"Jan Jaap ten Arve",omzet:73040,actief:1,regio:0.30,bijdrage:21000},
- {n:"Maurits Rodermond",omzet:71785,actief:1,regio:0.30,bijdrage:21000},
- {n:"Anthonie Schilder",omzet:58860,actief:1,regio:0.40,bijdrage:16800},
- {n:"Wilma Out",omzet:54421,actief:1,regio:0.50,bijdrage:12000},
- {n:"Mathias Elias",omzet:20746,actief:1,regio:0.50,bijdrage:12000},
+ {naam:"Rogier de Vries",omzet2025:274471,regio:30,bijdrage:21000},
+ {naam:"Pelle Freijsen",omzet2025:219224,regio:30,bijdrage:21000},
+ {naam:"Jori Netiv",omzet2025:128338,regio:30,bijdrage:21000},
+ {naam:"A10 / 't Gooi",omzet2025:114354,regio:10,bijdrage:21000},
+ {naam:"Maurits van Leeuwen",omzet2025:83286,regio:30,bijdrage:21000,actief:0},
+ {naam:"Jan Jaap ten Arve",omzet2025:73040,regio:30,bijdrage:21000},
+ {naam:"Maurits Rodermond",omzet2025:71785,regio:30,bijdrage:21000},
+ {naam:"Anthonie Schilder",omzet2025:58860,regio:40,bijdrage:16800},
+ {naam:"Wilma Out",omzet2025:54421,regio:50,bijdrage:12000},
+ {naam:"Mathias Elias",omzet2025:20746,regio:50,bijdrage:12000},
+].map(m=>mkFranchise(m));
+
+function mkFranchise(m){return {naam:m.naam||"Nieuwe makelaar",type:"franchise",actief:m.actief===0?0:1,
+  omzetMode:"bedrag",omzetVal:(m.omzet2025!=null?m.omzet2025:0),omzet2025:(m.omzet2025!=null?m.omzet2025:0),
+  regio:m.regio!=null?m.regio:30,bijdrage:m.bijdrage!=null?m.bijdrage:21000,
+  bruto:60000,vakpct:8,premiepct:20,penspct:10,bonuspct:10,vgzAfdrachtPct:10,_open:false};}
+function mkLoondienst(){return {naam:"Nieuwe loondienst-makelaar",type:"loondienst",actief:1,
+  omzetMode:"bedrag",omzetVal:150000,omzet2025:0,regio:30,bijdrage:21000,
+  bruto:60000,vakpct:8,premiepct:20,penspct:10,bonuspct:10,vgzAfdrachtPct:10,_open:true};}
+
+const DEFAULT_PRO=[
+ {label:"Netto-omzet doorbelast",bedrag:94775},
+ {label:"Kostprijs (inkoop t.b.v. makelaars)",bedrag:-294766.21},
+ {label:"Franchise-afdracht betaald aan VGZ",bedrag:-158644},
+ {label:"Overige bedrijfskosten Pro",bedrag:-64468},
 ];
-const DEFAULT_KNOBS={groei:0,kal:1,feePro:69000,feeVgz:75000,tech:44529,funda:48460,schaal:1};
+const DEFAULT_VGZ=[
+ {label:"Eigen omzet + ontvangst van Pro",bedrag:270728},
+ {label:"Kostprijs VGZ",bedrag:-4474.82},
+ {label:"Techniek / Effytool",bedrag:-44529},
+ {label:"Overige kosten VGZ",bedrag:-130246.86},
+];
+const DEFAULT_MGMT={bedrag:132000,entiteit:"VGZ"};
 
-let MAK=[], KNOBS={};
+let MAK=[], PRO=[], VGZ=[], MGMT={};
+function loadDefaults(){
+  MAK=DEFAULT_MAK.map(m=>({...m}));
+  PRO=DEFAULT_PRO.map(x=>({...x})); VGZ=DEFAULT_VGZ.map(x=>({...x}));
+  MGMT={...DEFAULT_MGMT};
+}
 
-function loadDefaults(){ MAK=DEFAULT_MAK.map(m=>({...m})); KNOBS={...DEFAULT_KNOBS}; }
-
-// ---- toegang ----
+/* ---------- toegang ---------- */
 $("enter").addEventListener("click",submit);
 $("tok").addEventListener("keydown",e=>{if(e.key==="Enter")submit();});
 async function submit(){
-  const t=$("tok").value.trim();
-  if(!t){$("lockerr").textContent="Vul de toegangscode in.";return;}
-  // verifieer token met een lijst-call
+  const t=$("tok").value.trim(); if(!t){$("lockerr").textContent="Vul de toegangscode in.";return;}
   try{
-    const r=await fetch(TOKEN_FN,{headers:{"x-finance-token":t}});
+    const r=await fetch(FN,{headers:{"x-finance-token":t}});
     if(r.status===401){$("lockerr").textContent="Onjuiste toegangscode.";return;}
-    TOKEN=t;
+    TOKEN=t; try{sessionStorage.setItem("mva_fin_token",TOKEN);}catch(e){}
     $("lock").classList.add("hidden"); $("app").classList.remove("hidden");
-    try{sessionStorage.setItem("mva_fin_token",TOKEN);}catch(e){}
-    loadDefaults(); buildKnobs(); buildMak(); recompute();
-    refreshList();
+    loadDefaults(); renderAll(); refreshList();
   }catch(e){ $("lockerr").textContent="Serverfout: "+(e.message||e); }
 }
 
-// ---- knoppen UI ----
-function buildKnobs(){
-  $("kGroei").value=KNOBS.groei; $("kKal").value=KNOBS.kal;
-  $("kFeePro").value=KNOBS.feePro; $("kFeeVgz").value=KNOBS.feeVgz;
-  $("kTech").value=KNOBS.tech; $("kFunda").value=KNOBS.funda;
-  $("kSchaal").checked=!!KNOBS.schaal;
-  syncKnobLabels();
+/* ---------- rekenmotor ---------- */
+function omzetVan(m){ if(!m.actief) return 0; return m.omzetMode==="pct" ? (m.omzet2025*(num(m.omzetVal)/100)) : num(m.omzetVal); }
+function loonkosten(m){ const b=num(m.bruto); return {bruto:b, vak:b*num(m.vakpct)/100, prem:b*num(m.premiepct)/100, pens:b*num(m.penspct)/100, get totaal(){return this.bruto+this.vak+this.prem+this.pens;}}; }
+function makContrib(m){ // {pro,vgz}
+  const o=omzetVan(m);
+  if(m.type==="loondienst"){
+    const lk=loonkosten(m).totaal, bonus=o*num(m.bonuspct)/100, vgzA=o*num(m.vgzAfdrachtPct)/100;
+    return {pro:o-vgzA-lk-bonus, vgz:vgzA};
+  }
+  const afdr=o*(num(m.regio)/100);
+  return {pro:afdr+(m.actief?num(m.bijdrage):0), vgz:0};
 }
-function syncKnobLabels(){
-  $("kGroeiV").textContent=(KNOBS.groei>0?"+":"")+KNOBS.groei+"%";
-  $("kKalV").textContent="×"+Number(KNOBS.kal).toFixed(4);
-  $("kSchaalV").textContent=KNOBS.schaal?"aan":"uit";
+function sum(arr){return arr.reduce((a,x)=>a+num(x.bedrag),0);}
+function bereken(){
+  let proMak=0,vgzMak=0;
+  for(const m of MAK){const c=makContrib(m); proMak+=c.pro; vgzMak+=c.vgz;}
+  const pro=proMak+sum(PRO)+(MGMT.entiteit==="PRO"?-num(MGMT.bedrag):0);
+  const vgz=vgzMak+sum(VGZ)+(MGMT.entiteit==="VGZ"?-num(MGMT.bedrag):0);
+  return {pro,vgz,samen:pro+vgz};
 }
-["kGroei","kKal","kFeePro","kFeeVgz","kTech","kFunda"].forEach(id=>{
-  document.addEventListener("input",e=>{
-    if(e.target.id!==id) return;
-    KNOBS.groei=+$("kGroei").value; KNOBS.kal=+$("kKal").value;
-    KNOBS.feePro=+$("kFeePro").value||0; KNOBS.feeVgz=+$("kFeeVgz").value||0;
-    KNOBS.tech=+$("kTech").value||0; KNOBS.funda=+$("kFunda").value||0;
-    syncKnobLabels(); recompute();
-  });
-});
-$("kSchaal").addEventListener("change",()=>{KNOBS.schaal=$("kSchaal").checked?1:0;syncKnobLabels();recompute();});
 
-$("pStd").addEventListener("click",()=>{loadDefaults();buildKnobs();buildMak();recompute();});
-$("p2026").addEventListener("click",()=>{KNOBS.feePro=0;KNOBS.feeVgz=132000;buildKnobs();recompute();});
+/* ---------- render ---------- */
+function renderAll(){ renderMak(); renderPosten(); $("mgmtBedrag").value=MGMT.bedrag; $("mgmtEnt").value=MGMT.entiteit; recompute(); }
 
-// ---- makelaars UI ----
-function buildMak(){
+function renderMak(){
   let h="";
   MAK.forEach((m,i)=>{
-    h+=`<tr data-i="${i}" class="${m.actief?'':'off'}">
-      <td class="l mak">${esc(m.n)}</td>
-      <td class="num">${eur.format(m.omzet)}</td>
-      <td><label class="toggle"><input type="checkbox" class="cAct" data-i="${i}" ${m.actief?'checked':''}><span class="switch"></span></label></td>
-      <td><input class="mini cReg" data-i="${i}" type="number" step="1" value="${Math.round(m.regio*100)}">%</td>
-      <td><input class="mini cBij" data-i="${i}" type="number" step="500" value="${m.bijdrage}"></td>
-      <td class="num calc cAfdr" data-i="${i}"></td>
-      <td class="num calc cKant" data-i="${i}"></td>
+    const c=makContrib(m), contrib=c.pro+c.vgz;
+    const isLd=m.type==="loondienst";
+    h+=`<tr class="${m.actief?'':'off'}" data-i="${i}">
+      <td class="l"><input type="text" data-f="naam" data-i="${i}" value="${escAttr(m.naam)}" style="width:170px;font-weight:600"></td>
+      <td class="l"><select data-f="type" data-i="${i}"><option value="franchise"${!isLd?' selected':''}>Franchise</option><option value="loondienst"${isLd?' selected':''}>Loondienst</option></select></td>
+      <td><span class="sw ${m.actief?'on':''}" data-act="${i}"></span></td>
+      <td class="num c2025">${m.omzet2025?eur0.format(m.omzet2025):'—'}</td>
+      <td><span class="omzetcell"><button class="modebtn" data-mode="${i}">${m.omzetMode==='pct'?'%':'€'}</button><input class="num" type="number" data-f="omzetVal" data-i="${i}" value="${m.omzetVal}"></span></td>
+      <td class="num contrib ${contrib<0?'':''}" style="color:${contrib<0?'var(--neg)':'var(--ink)'}">${eur0.format(contrib)}</td>
+      <td><button class="expandbtn" data-exp="${i}">${m._open?'−':'+'}</button></td>
+      <td><button class="iconbtn" data-del="${i}" title="verwijderen">✕</button></td>
     </tr>`;
+    if(m._open){
+      h+=`<tr class="detail"><td colspan="8"><div class="detailbox">`;
+      if(isLd){
+        const lk=loonkosten(m), o=omzetVan(m), bonus=o*num(m.bonuspct)/100;
+        h+=`
+        <div class="fld"><label>Brutosalaris / jaar</label><input class="num" type="number" data-f="bruto" data-i="${i}" value="${m.bruto}"></div>
+        <div class="fld"><label>Vakantiegeld %</label><input class="num" type="number" data-f="vakpct" data-i="${i}" value="${m.vakpct}"></div>
+        <div class="fld"><label>Werkgeverspremies %</label><input class="num" type="number" data-f="premiepct" data-i="${i}" value="${m.premiepct}"></div>
+        <div class="fld"><label>Pensioen werkgever %</label><input class="num" type="number" data-f="penspct" data-i="${i}" value="${m.penspct}"></div>
+        <div class="fld"><label>Bonus % van omzet</label><input class="num" type="number" data-f="bonuspct" data-i="${i}" value="${m.bonuspct}"></div>
+        <div class="fld"><label>Afdracht naar VGZ %</label><input class="num" type="number" data-f="vgzAfdrachtPct" data-i="${i}" value="${m.vgzAfdrachtPct}"></div>
+        <div class="loonbox"><span>Loonkosten:</span> <b>${eur.format(lk.bruto)}</b> bruto <span>+ ${eur.format(lk.vak)} vak.geld</span> <span>+ ${eur.format(lk.prem)} premies</span> <span>+ ${eur.format(lk.pens)} pensioen</span> = <b>${eur.format(lk.totaal)}</b> werkgeverskosten <span>· bonus <b>${eur.format(bonus)}</b></span></div>`;
+      } else {
+        h+=`
+        <div class="fld"><label>Regio-afdracht %</label><input class="num" type="number" data-f="regio" data-i="${i}" value="${m.regio}"></div>
+        <div class="fld"><label>Vaste bijdrage / jaar</label><input class="num" type="number" data-f="bijdrage" data-i="${i}" value="${m.bijdrage}"></div>
+        <div class="loonbox"><span>Franchise: afdracht = omzet × regio% = <b>${eur.format(omzetVan(m)*num(m.regio)/100)}</b>, + vaste bijdrage <b>${eur.format(m.actief?num(m.bijdrage):0)}</b> → naar kantoor (Pro).</span></div>`;
+      }
+      h+=`</div></td></tr>`;
+    }
   });
   $("makBody").innerHTML=h;
-  $("makBody").querySelectorAll(".cAct").forEach(el=>el.addEventListener("change",()=>{const i=+el.dataset.i;MAK[i].actief=el.checked?1:0;el.closest("tr").classList.toggle("off",!el.checked);recompute();}));
-  $("makBody").querySelectorAll(".cReg").forEach(el=>el.addEventListener("input",()=>{MAK[+el.dataset.i].regio=(+el.value||0)/100;recompute();}));
-  $("makBody").querySelectorAll(".cBij").forEach(el=>el.addEventListener("input",()=>{MAK[+el.dataset.i].bijdrage=+el.value||0;recompute();}));
+  const act=MAK.filter(m=>m.actief).length, ld=MAK.filter(m=>m.actief&&m.type==="loondienst").length;
+  $("makSub").textContent=`${act} actief (${MAK.length} totaal) · ${ld} loondienst`;
+  bindMak();
 }
-
-// ---- de rekenmotor (exact de Scenario-formules) ----
-function recompute(){
-  let count=0, totAfdr=0, totKant=0;
-  MAK.forEach(m=>{
-    const afdr = m.omzet*(1+KNOBS.groei/100)*m.regio*KNOBS.kal*m.actief;
-    const kant = afdr + m.bijdrage*m.actief;
-    count+=m.actief; totAfdr+=afdr; totKant+=kant;
-    const ca=$("makBody").querySelector(`.cAfdr[data-i="${MAK.indexOf(m)}"]`);
-    const ck=$("makBody").querySelector(`.cKant[data-i="${MAK.indexOf(m)}"]`);
-    if(ca) ca.textContent = m.actief? eur.format(afdr) : "—";
-    if(ck) ck.textContent = m.actief? eur.format(kant) : "—";
+function bindMak(){
+  $("makBody").querySelectorAll("input[data-f],select[data-f]").forEach(el=>{
+    const ev = el.tagName==="SELECT"?"change":"input";
+    el.addEventListener(ev,()=>{ const i=+el.dataset.i, f=el.dataset.f;
+      if(f==="type"){ MAK[i].type=el.value; MAK[i]._open=true; renderMak(); recompute(); return; }
+      MAK[i][f]= (el.type==="number")? el.value : el.value;
+      // herbereken alleen totalen + die rij-detailbox indien nodig
+      if(["bruto","vakpct","premiepct","penspct","bonuspct","vgzAfdrachtPct","regio","bijdrage","omzetVal"].includes(f) && MAK[i]._open){ renderMak(); }
+      recompute();
+    });
   });
-  $("makCount").textContent=count+" actief";
-  $("makAfdr").textContent=eur.format(totAfdr);
-  $("makKant").textContent=eur.format(totKant);
-  $("makSub").textContent=`${count} van ${MAK.length} makelaars actief`;
-
-  const factor = 1 - (1 - count/10)*KNOBS.schaal;
-  // PRO
-  const C21=totKant, C22=CONST.proNettoOmzet;
-  const C23=-((CONST.proKostprijsBasisExclFunda + KNOBS.funda)*factor);
-  const C24=CONST.proFranchiseBetaald, C25=-KNOBS.feePro, C26=CONST.proOverig;
-  const proRes=C21+C22+C23+C24+C25+C26;
-  // VGZ
-  const C30=CONST.vgzEigenOmzet, C31=CONST.vgzKostprijsExclTech, C32=-KNOBS.tech, C33=-KNOBS.feeVgz, C34=CONST.vgzOverigVast;
-  const vgzRes=C30+C31+C32+C33+C34;
-  const con=proRes+vgzRes, delta=con-CONST.basis2025;
-
-  setStat("rPro",proRes); setStat("rVgz",vgzRes); setStat("rCon",con); setStat("rDelta",delta);
-  $("rConSub").textContent = (delta>=0?"+":"")+eur.format(delta)+" t.o.v. 2025";
+  $("makBody").querySelectorAll("[data-act]").forEach(el=>el.addEventListener("click",()=>{const i=+el.dataset.act; MAK[i].actief=MAK[i].actief?0:1; renderMak(); recompute();}));
+  $("makBody").querySelectorAll("[data-mode]").forEach(el=>el.addEventListener("click",()=>{const i=+el.dataset.mode; MAK[i].omzetMode=MAK[i].omzetMode==="pct"?"bedrag":"pct"; if(MAK[i].omzetMode==="pct"&&(!MAK[i].omzetVal||MAK[i].omzetVal>1000)) MAK[i].omzetVal=100; renderMak(); recompute();}));
+  $("makBody").querySelectorAll("[data-exp]").forEach(el=>el.addEventListener("click",()=>{const i=+el.dataset.exp; MAK[i]._open=!MAK[i]._open; renderMak();}));
+  $("makBody").querySelectorAll("[data-del]").forEach(el=>el.addEventListener("click",()=>{const i=+el.dataset.del; if(confirm("Deze makelaar verwijderen uit het scenario?")){MAK.splice(i,1); renderMak(); recompute();}}));
 }
-function setStat(id,v){ const el=$(id); el.textContent=eur.format(v); el.classList.toggle("neg",v<0); }
 
-// ---- opslaan / laden ----
+function renderPosten(){
+  const draw=(arr,host,key)=>{
+    let h="";
+    arr.forEach((p,i)=>{ h+=`<div class="pline">
+      <input type="text" data-pk="${key}" data-pi="${i}" data-pf="label" value="${escAttr(p.label)}">
+      <input class="num" type="number" data-pk="${key}" data-pi="${i}" data-pf="bedrag" value="${p.bedrag}">
+      <button class="iconbtn" data-pdel="${key}" data-pi="${i}">✕</button></div>`; });
+    $(host).innerHTML=h;
+  };
+  draw(PRO,"postenPro","pro"); draw(VGZ,"postenVgz","vgz");
+  document.querySelectorAll("[data-pk]").forEach(el=>el.addEventListener("input",()=>{
+    const arr=el.dataset.pk==="pro"?PRO:VGZ, i=+el.dataset.pi, f=el.dataset.pf;
+    arr[i][f]= f==="bedrag"? el.value : el.value; recompute();
+  }));
+  document.querySelectorAll("[data-pdel]").forEach(el=>el.addEventListener("click",()=>{
+    const arr=el.dataset.pdel==="pro"?PRO:VGZ; arr.splice(+el.dataset.pi,1); renderPosten(); recompute();
+  }));
+}
+document.querySelectorAll("[data-add]").forEach(el=>el.addEventListener("click",()=>{
+  (el.dataset.add==="pro"?PRO:VGZ).push({label:"Nieuwe post",bedrag:0}); renderPosten(); recompute();
+}));
+$("addFr").addEventListener("click",()=>{MAK.push(mkFranchise({naam:"Nieuwe franchise-makelaar",omzet2025:0,regio:30,bijdrage:21000})); renderMak(); recompute();});
+$("addLd").addEventListener("click",()=>{MAK.push(mkLoondienst()); renderMak(); recompute();});
+$("mgmtBedrag").addEventListener("input",()=>{MGMT.bedrag=$("mgmtBedrag").value; recompute();});
+$("mgmtEnt").addEventListener("change",()=>{MGMT.entiteit=$("mgmtEnt").value; recompute();});
+
+function recompute(){
+  renderMak_contribOnly();
+  const r=bereken();
+  setV("rPro",r.pro); setV("rVgz",r.vgz); setV("rSam",r.samen);
+  $("sumPro").textContent=eur.format(sum(PRO)); $("sumVgz").textContent=eur.format(sum(VGZ));
+  const d25=r.samen-REF.sam2025, dbg=r.samen-REF.samBg;
+  $("dvs25").innerHTML=`vs 2025 <b>${(d25>=0?'+':'')}${eur0.format(d25)}</b>`;
+  $("dvsbg").innerHTML=`vs begroot <b>${(dbg>=0?'+':'')}${eur0.format(dbg)}</b>`;
+}
+function renderMak_contribOnly(){
+  // werk alleen de bijdrage-cellen en subtitel bij (zonder volledige rerender, behoudt focus)
+  MAK.forEach((m,i)=>{
+    const row=$("makBody").querySelector(`tr[data-i="${i}"] .contrib`);
+    if(row){const c=makContrib(m), t=c.pro+c.vgz; row.textContent=eur0.format(t); row.style.color=t<0?'var(--neg)':'var(--ink)';}
+  });
+  const act=MAK.filter(m=>m.actief).length, ld=MAK.filter(m=>m.actief&&m.type==="loondienst").length;
+  $("makSub").textContent=`${act} actief (${MAK.length} totaal) · ${ld} loondienst`;
+}
+function setV(id,v){const el=$(id); el.textContent=eur0.format(v); el.classList.toggle("neg",v<0);}
+
+/* 2025 toggle */
+$("sw2025").addEventListener("click",()=>{ $("sw2025").classList.toggle("on"); $("app").classList.toggle("hide2025", !$("sw2025").classList.contains("on")); });
+
+/* ---------- opslaan / laden ---------- */
 $("btnSave").addEventListener("click",async()=>{
-  const naam=$("scnNaam").value.trim()||"Naamloos scenario";
-  msg("Bewaren…");
-  try{
-    const r=await fetch(TOKEN_FN,{method:"POST",headers:{"x-finance-token":TOKEN,"content-type":"application/json"},
-      body:JSON.stringify({naam,payload:{knobs:KNOBS,mak:MAK}})});
+  const naam=$("scnNaam").value.trim()||"Naamloos scenario"; msg("Bewaren…");
+  try{ const r=await fetch(FN,{method:"POST",headers:{"x-finance-token":TOKEN,"content-type":"application/json"},
+        body:JSON.stringify({naam,payload:{MAK,PRO,VGZ,MGMT}})});
     const j=await r.json(); if(!r.ok) throw new Error(j.error||r.status);
     msg(`Bewaard als “${j.naam}”.`); $("scnNaam").value=""; refreshList(j.id);
   }catch(e){ msg("Bewaren mislukt: "+(e.message||e)); }
 });
 async function refreshList(selId){
-  try{
-    const r=await fetch(TOKEN_FN,{headers:{"x-finance-token":TOKEN}});
-    const j=await r.json(); if(!r.ok) throw new Error(j.error||r.status);
+  try{ const r=await fetch(FN,{headers:{"x-finance-token":TOKEN}}); const j=await r.json(); if(!r.ok) throw new Error(j.error||r.status);
     const sel=$("scnList"); sel.innerHTML='<option value="">— bewaarde scenario\u0027s —</option>';
-    (j.scenarios||[]).forEach(s=>{const o=document.createElement("option");o.value=s.id;
-      o.textContent=`${s.naam} · ${new Date(s.ts).toLocaleDateString("nl-NL")}`;sel.appendChild(o);});
+    (j.scenarios||[]).forEach(s=>{const o=document.createElement("option");o.value=s.id;o.textContent=`${s.naam} · ${new Date(s.ts).toLocaleDateString("nl-NL")}`;sel.appendChild(o);});
     if(selId) sel.value=selId;
   }catch(e){ msg("Lijst laden mislukt: "+(e.message||e)); }
 }
 $("btnLoad").addEventListener("click",async()=>{
-  const id=$("scnList").value; if(!id){msg("Kies eerst een scenario.");return;}
-  msg("Laden…");
-  try{
-    const r=await fetch(TOKEN_FN+"?id="+encodeURIComponent(id),{headers:{"x-finance-token":TOKEN}});
-    const j=await r.json(); if(!r.ok) throw new Error(j.error||r.status);
-    KNOBS={...DEFAULT_KNOBS,...(j.payload.knobs||{})};
-    MAK=(j.payload.mak||DEFAULT_MAK).map(m=>({...m}));
-    buildKnobs(); buildMak(); recompute(); msg(`Geladen: “${j.naam}”.`);
+  const id=$("scnList").value; if(!id){msg("Kies eerst een scenario.");return;} msg("Laden…");
+  try{ const r=await fetch(FN+"?id="+encodeURIComponent(id),{headers:{"x-finance-token":TOKEN}}); const j=await r.json(); if(!r.ok) throw new Error(j.error||r.status);
+    const p=j.payload||{};
+    if(p.MAK){ MAK=p.MAK.map(m=>({...m})); PRO=(p.PRO||DEFAULT_PRO).map(x=>({...x})); VGZ=(p.VGZ||DEFAULT_VGZ).map(x=>({...x})); MGMT={...DEFAULT_MGMT,...(p.MGMT||{})}; }
+    renderAll(); msg(`Geladen: “${j.naam}”.`);
   }catch(e){ msg("Laden mislukt: "+(e.message||e)); }
 });
 $("btnDel").addEventListener("click",async()=>{
   const id=$("scnList").value; if(!id){msg("Kies eerst een scenario.");return;}
   if(!confirm("Dit scenario verwijderen?")) return;
-  try{
-    const r=await fetch(TOKEN_FN+"?id="+encodeURIComponent(id),{method:"DELETE",headers:{"x-finance-token":TOKEN}});
-    const j=await r.json(); if(!r.ok) throw new Error(j.error||r.status);
+  try{ const r=await fetch(FN+"?id="+encodeURIComponent(id),{method:"DELETE",headers:{"x-finance-token":TOKEN}}); const j=await r.json(); if(!r.ok) throw new Error(j.error||r.status);
     msg("Verwijderd."); refreshList();
   }catch(e){ msg("Verwijderen mislukt: "+(e.message||e)); }
 });
 function msg(t){ $("saveMsg").textContent=t; }
-function esc(s){return String(s).replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));}
+
+function num(v){ const n=parseFloat(v); return isNaN(n)?0:n; }
+function escAttr(s){ return String(s==null?"":s).replace(/"/g,"&quot;").replace(/</g,"&lt;"); }
 
 // sessie: onthoud login over pagina's heen
 (function(){try{var s=sessionStorage.getItem("mva_fin_token");if(s){document.getElementById("tok").value=s;submit();}}catch(e){}})();
