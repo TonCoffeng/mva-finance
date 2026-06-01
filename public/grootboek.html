@@ -40,6 +40,13 @@
     font:600 13px/1 "Public Sans";letter-spacing:.03em;padding:9px 16px;border-radius:999px;transition:.16s}
   .nav a:hover{border-color:var(--navy-soft)}
   .nav a.active{background:var(--navy);color:#fff;border-color:var(--navy)}
+  .toolbar{display:flex;justify-content:flex-end;align-items:center;gap:14px;margin:2px 2px 14px}
+  .toggle2{display:inline-flex;align-items:center;gap:9px;cursor:pointer;font:600 13px "Public Sans";color:var(--navy)}
+  .toggle2 input{position:absolute;opacity:0}
+  .toggle2 .sw{width:40px;height:23px;border-radius:999px;background:var(--line2);position:relative;transition:.16s}
+  .toggle2 .sw::after{content:"";position:absolute;top:2px;left:2px;width:19px;height:19px;border-radius:50%;background:#fff;transition:.16s;box-shadow:0 1px 3px #0003}
+  .toggle2 input:checked + .sw{background:var(--navy)} .toggle2 input:checked + .sw::after{transform:translateX(17px)}
+  .hide-2025 .c2025{display:none}
   .goldrule{height:3px;background:linear-gradient(90deg,var(--gold),transparent 60%);margin:0 0 22px}
 
   .tabs{display:flex;gap:8px;margin:22px 0 18px}
@@ -123,7 +130,7 @@
 </div>
 
 <!-- APP -->
-<div id="app" class="wrap hidden">
+<div id="app" class="wrap hidden hide-2025">
   <header class="top">
     <div>
       <div class="brand">MVA Intelligence · Finance</div>
@@ -132,15 +139,19 @@
     <div class="peil" id="peil"></div>
   </header>
   <nav class="nav">
-    <a class="active" href="grootboek.html">Realisatie</a>
-    <a href="begroting.html">Begroting</a>
     <a href="scenario.html">Scenario</a>
+    <a href="begroting.html">Begroting</a>
+    <a class="active" href="grootboek.html">Realisatie</a>
   </nav>
   <div class="goldrule"></div>
 
   <div class="tabs" id="tabs" role="tablist">
     <button class="tab" role="tab" data-ent="PRO" aria-selected="true">Pro Vastgoedgroep</button>
     <button class="tab" role="tab" data-ent="VZ" aria-selected="false">Vastgoedzaak</button>
+  </div>
+
+  <div class="toolbar">
+    <label class="toggle2"><input type="checkbox" id="show2025"><span class="sw"></span><span>Vergelijk met 2025</span></label>
   </div>
 
   <div class="card">
@@ -154,11 +165,11 @@
           <tr>
             <th class="l">GB</th>
             <th class="l">Omschrijving</th>
-            <th>2025</th>
+            <th class="c2025">2025</th>
             <th>2026 YTD</th>
             <th>Op koers</th>
-            <th>&Delta; vs 2025</th>
-            <th>%</th>
+            <th class="c2025">&Delta; vs 2025</th>
+            <th class="c2025">%</th>
             <th>Vlag</th>
           </tr>
         </thead>
@@ -230,8 +241,9 @@ function vlagFor(v2025, koers){
 }
 function numCell(val, opts={}){
   const cls = (val < -0.005) ? "neg" : "pos";
+  const extra = opts.cls ? (" "+opts.cls) : "";
   const txt = (opts.empty && Math.abs(val) < 0.005) ? "—" : eur.format(val);
-  return `<td class="num ${cls}">${txt}</td>`;
+  return `<td class="num ${cls}${extra}">${txt}</td>`;
 }
 
 function setTabs(){
@@ -274,11 +286,11 @@ function render(){
       html += `<tr>
         <td class="l gb num">${esc(r.gb_nr)}</td>
         <td class="l oms">${esc(r.omschrijving||"")}</td>
-        ${numCell(v25,{empty:true})}
+        ${numCell(v25,{empty:true,cls:"c2025"})}
         ${numCell(vy,{empty:true})}
         ${numCell(koers,{empty:true})}
-        ${numCell(delta,{empty:true})}
-        <td class="num ${delta<-0.005?'neg':'pos'}">${pctTxt}</td>
+        ${numCell(delta,{empty:true,cls:"c2025"})}
+        <td class="num c2025 ${delta<-0.005?'neg':'pos'}">${pctTxt}</td>
         <td class="vlag ${vcls}">${vsym}</td>
       </tr>`;
     }
@@ -287,7 +299,7 @@ function render(){
 
   $("tfoot").innerHTML = `<tr>
     <td class="l" colspan="2">Resultaat ${entName}</td>
-    <td class="num ${tot25<0?'neg':''}">${eur.format(tot25)}</td>
+    <td class="num c2025 ${tot25<0?'neg':''}">${eur.format(tot25)}</td>
     <td class="num ${totY<0?'neg':''}">${eur.format(totY)}</td>
     <td class="num ${totK<0?'neg':''}">${eur.format(totK)}</td>
     <td></td><td></td><td></td>
@@ -310,6 +322,8 @@ function render(){
 
 function fmtDate(s){ if(!s) return "—"; const [y,m,d]=s.split("-"); return `${d}-${m}-${y}`; }
 function esc(s){ return String(s).replace(/[&<>"]/g, c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c])); }
+
+document.getElementById("show2025").addEventListener("change",function(){document.getElementById("app").classList.toggle("hide-2025", !this.checked);});
 
 // sessie: onthoud login over pagina's heen
 (function(){try{var s=sessionStorage.getItem("mva_fin_token");if(s){document.getElementById("tok").value=s;submit();}}catch(e){}})();

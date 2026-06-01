@@ -35,6 +35,13 @@
     font:600 13px/1 "Public Sans";letter-spacing:.03em;padding:9px 16px;border-radius:999px;transition:.16s}
   .nav a:hover{border-color:var(--navy-soft)}
   .nav a.active{background:var(--navy);color:#fff;border-color:var(--navy)}
+  .toolbar{display:flex;justify-content:flex-end;align-items:center;gap:14px;margin:2px 2px 14px}
+  .toggle2{display:inline-flex;align-items:center;gap:9px;cursor:pointer;font:600 13px "Public Sans";color:var(--navy)}
+  .toggle2 input{position:absolute;opacity:0}
+  .toggle2 .sw{width:40px;height:23px;border-radius:999px;background:var(--line2);position:relative;transition:.16s}
+  .toggle2 .sw::after{content:"";position:absolute;top:2px;left:2px;width:19px;height:19px;border-radius:50%;background:#fff;transition:.16s;box-shadow:0 1px 3px #0003}
+  .toggle2 input:checked + .sw{background:var(--navy)} .toggle2 input:checked + .sw::after{transform:translateX(17px)}
+  .hide-2025 .c2025{display:none}
   .goldrule{height:3px;background:linear-gradient(90deg,var(--gold),transparent 60%);margin:0 0 18px}
 
   .note{display:flex;flex-wrap:wrap;align-items:center;gap:10px;justify-content:space-between;
@@ -123,7 +130,7 @@
   <p style="text-align:center;margin-top:16px">Begroting ophalen…</p>
 </div>
 
-<div id="app" class="wrap hidden">
+<div id="app" class="wrap hidden hide-2025">
   <header class="top">
     <div>
       <div class="brand">MVA Intelligence · Finance</div>
@@ -132,9 +139,9 @@
     <div class="peil" id="peil"></div>
   </header>
   <nav class="nav">
-    <a href="grootboek.html">Realisatie</a>
-    <a class="active" href="begroting.html">Begroting</a>
     <a href="scenario.html">Scenario</a>
+    <a class="active" href="begroting.html">Begroting</a>
+    <a href="grootboek.html">Realisatie</a>
   </nav>
   <div class="goldrule"></div>
 
@@ -146,6 +153,10 @@
   <div class="tabs" id="tabs" role="tablist">
     <button class="tab" role="tab" data-ent="PRO" aria-selected="true">Pro Vastgoedgroep</button>
     <button class="tab" role="tab" data-ent="VZ" aria-selected="false">Vastgoedzaak</button>
+  </div>
+
+  <div class="toolbar">
+    <label class="toggle2"><input type="checkbox" id="show2025"><span class="sw"></span><span>Vergelijk met 2025</span></label>
   </div>
 
   <div class="card">
@@ -163,7 +174,7 @@
           <tr>
             <th class="l">GB</th>
             <th class="l">Omschrijving</th>
-            <th>2025</th>
+            <th class="c2025">2025</th>
             <th>2026 YTD</th>
             <th>2026 begroot</th>
             <th class="l">Logica</th>
@@ -252,7 +263,7 @@ function render(){
       html+=`<tr>
         <td class="l gb num">${esc(r.gb_nr)}</td>
         <td class="l oms">${esc(r.omschrijving||"")}</td>
-        <td class="num ref">${refCell(v25)}</td>
+        <td class="num ref c2025">${refCell(v25)}</td>
         <td class="num ref">${refCell(vy)}</td>
         <td><input class="binput num ${negCls}" data-i="${r._i}" type="number" step="1"
              value="${bval==null?"":bval}" placeholder="0" /></td>
@@ -316,6 +327,8 @@ function updateTotals(){
 function refCell(v){ if(v==null||Math.abs(v)<0.005) return "—"; const c=v<0?'neg':''; return `<span class="${c}">${eur.format(v)}</span>`; }
 function fmtDate(s){ if(!s) return "—"; const [y,m,d]=String(s).split("-"); return `${d}-${m}-${y}`; }
 function esc(s){ return String(s).replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c])); }
+
+document.getElementById("show2025").addEventListener("change",function(){document.getElementById("app").classList.toggle("hide-2025", !this.checked);});
 
 // sessie: onthoud login over pagina's heen
 (function(){try{var s=sessionStorage.getItem("mva_fin_token");if(s){document.getElementById("tok").value=s;submit();}}catch(e){}})();
