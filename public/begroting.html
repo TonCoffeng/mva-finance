@@ -30,6 +30,11 @@
   h1{font-family:"Fraunces",serif;font-weight:500;font-size:40px;line-height:1.02;margin:8px 0 0;letter-spacing:-.01em}
   .peil{font-size:13px;color:var(--muted)}
   .peil b{color:var(--ink);font-weight:600}
+  .nav{display:flex;gap:8px;margin:14px 0 0}
+  .nav a{text-decoration:none;border:1px solid var(--line2);background:var(--card);color:var(--navy);
+    font:600 13px/1 "Public Sans";letter-spacing:.03em;padding:9px 16px;border-radius:999px;transition:.16s}
+  .nav a:hover{border-color:var(--navy-soft)}
+  .nav a.active{background:var(--navy);color:#fff;border-color:var(--navy)}
   .goldrule{height:3px;background:linear-gradient(90deg,var(--gold),transparent 60%);margin:0 0 18px}
 
   .note{display:flex;flex-wrap:wrap;align-items:center;gap:10px;justify-content:space-between;
@@ -126,6 +131,11 @@
     </div>
     <div class="peil" id="peil"></div>
   </header>
+  <nav class="nav">
+    <a href="grootboek.html">Realisatie</a>
+    <a class="active" href="begroting.html">Begroting</a>
+    <a href="scenario.html">Scenario</a>
+  </nav>
   <div class="goldrule"></div>
 
   <div class="note">
@@ -199,6 +209,7 @@ async function submit(){
     ROWS=DATA.rows.map((r,i)=>({...r,_i:i,begroot:r.begroot==null?null:Number(r.begroot)}));
     BASE=DATA.baseline||{PRO:0,VZ:0};
     hide($("loading")); show($("app"));
+    try{sessionStorage.setItem("mva_fin_token",TOKEN);}catch(e){}
     const p=DATA.peil||{};
     $("peil").innerHTML=`Referentie &nbsp;<b>${fmtDate(p.v2025)}</b> &nbsp;·&nbsp; YTD <b>${fmtDate(p.ytd)}</b>`;
     render();
@@ -305,6 +316,9 @@ function updateTotals(){
 function refCell(v){ if(v==null||Math.abs(v)<0.005) return "—"; const c=v<0?'neg':''; return `<span class="${c}">${eur.format(v)}</span>`; }
 function fmtDate(s){ if(!s) return "—"; const [y,m,d]=String(s).split("-"); return `${d}-${m}-${y}`; }
 function esc(s){ return String(s).replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c])); }
+
+// sessie: onthoud login over pagina's heen
+(function(){try{var s=sessionStorage.getItem("mva_fin_token");if(s){document.getElementById("tok").value=s;submit();}}catch(e){}})();
 </script>
 </body>
 </html>

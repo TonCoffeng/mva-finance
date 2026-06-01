@@ -219,6 +219,7 @@ async function submit(){
     if(r.status===401){$("lockerr").textContent="Onjuiste toegangscode.";return;}
     TOKEN=t;
     $("lock").classList.add("hidden"); $("app").classList.remove("hidden");
+    try{sessionStorage.setItem("mva_fin_token",TOKEN);}catch(e){}
     loadDefaults(); buildKnobs(); buildMak(); recompute();
     refreshList();
   }catch(e){ $("lockerr").textContent="Serverfout: "+(e.message||e); }
@@ -347,6 +348,9 @@ $("btnDel").addEventListener("click",async()=>{
 });
 function msg(t){ $("saveMsg").textContent=t; }
 function esc(s){return String(s).replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));}
+
+// sessie: onthoud login over pagina's heen
+(function(){try{var s=sessionStorage.getItem("mva_fin_token");if(s){document.getElementById("tok").value=s;submit();}}catch(e){}})();
 </script>
 </body>
 </html>
