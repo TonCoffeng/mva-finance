@@ -1,0 +1,304 @@
+<!doctype html>
+<html lang="nl">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Grootboek detail — MVA Finance</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,500;9..144,600&family=Public+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --paper:#f4f1ea; --card:#fbf9f4; --ink:#1c1b18; --muted:#6f6a60;
+    --line:#e3ddd0; --line2:#d6cfbd;
+    --navy:#16324f; --navy-soft:#2c4b6b;
+    --gold:#b08d3f; --pos:#1f7a4d; --neg:#b3261e;
+    --rad:14px;
+  }
+  *{box-sizing:border-box}
+  html,body{margin:0}
+  body{
+    background:
+      radial-gradient(1200px 600px at 100% -10%, #ffffff6e, transparent),
+      var(--paper);
+    color:var(--ink);
+    font-family:"Public Sans",-apple-system,sans-serif;
+    font-size:15px; line-height:1.5;
+    -webkit-font-smoothing:antialiased;
+  }
+  .num{font-variant-numeric:tabular-nums lining-nums}
+  .wrap{max-width:1180px;margin:0 auto;padding:32px 24px 80px}
+
+  header.top{display:flex;flex-wrap:wrap;align-items:flex-end;justify-content:space-between;gap:18px;
+    padding-bottom:18px;border-bottom:2px solid var(--navy);margin-bottom:6px}
+  .brand{font:600 12px/1 "Public Sans";letter-spacing:.22em;text-transform:uppercase;color:var(--navy-soft)}
+  h1{font-family:"Fraunces",serif;font-weight:500;font-size:40px;line-height:1.02;margin:8px 0 0;letter-spacing:-.01em}
+  .peil{font-size:13px;color:var(--muted)}
+  .peil b{color:var(--ink);font-weight:600}
+  .goldrule{height:3px;background:linear-gradient(90deg,var(--gold),transparent 60%);margin:0 0 22px}
+
+  .tabs{display:flex;gap:8px;margin:22px 0 18px}
+  .tab{appearance:none;border:1px solid var(--line2);background:var(--card);color:var(--navy);
+    font:600 13px/1 "Public Sans";letter-spacing:.04em;padding:9px 18px;border-radius:999px;cursor:pointer;transition:.18s}
+  .tab:hover{border-color:var(--navy-soft)}
+  .tab[aria-selected="true"]{background:var(--navy);color:#fff;border-color:var(--navy)}
+
+  .card{background:var(--card);border:1px solid var(--line);border-radius:var(--rad);overflow:hidden;
+    box-shadow:0 1px 0 #fff inset, 0 18px 40px -28px #1c1b1840}
+
+  .cardhead{display:flex;flex-wrap:wrap;justify-content:space-between;align-items:center;gap:14px;
+    padding:16px 20px;border-bottom:1px solid var(--line)}
+  .cardhead .name{font-family:"Fraunces",serif;font-size:21px;font-weight:600}
+  .badge{display:inline-flex;align-items:center;gap:8px;font:600 12.5px/1 "Public Sans";letter-spacing:.02em;
+    padding:7px 12px;border-radius:999px;border:1px solid}
+  .badge.ok{color:var(--pos);border-color:#bfe3cf;background:#eef7f1}
+  .badge.bad{color:var(--neg);border-color:#f0c9c4;background:#fcefed}
+  .dot{width:7px;height:7px;border-radius:50%;background:currentColor}
+
+  table{width:100%;border-collapse:collapse}
+  thead th{position:sticky;top:0;background:#f0ece2;color:var(--muted);
+    font:600 11px/1.2 "Public Sans";letter-spacing:.08em;text-transform:uppercase;text-align:right;
+    padding:11px 14px;border-bottom:1px solid var(--line2);white-space:nowrap;z-index:1}
+  thead th.l{text-align:left}
+  .catrow td{background:#efe9dc;color:var(--navy);font:600 11px/1 "Public Sans";letter-spacing:.1em;
+    text-transform:uppercase;padding:10px 14px;border-top:1px solid var(--line2);border-bottom:1px solid var(--line2)}
+  tbody td{padding:9px 14px;border-bottom:1px solid var(--line);text-align:right;white-space:nowrap}
+  tbody td.l{text-align:left;white-space:normal}
+  tbody tr:hover td{background:#fff7e9}
+  .gb{color:var(--navy-soft);font-weight:600}
+  .oms{color:var(--ink)}
+  .neg{color:var(--neg)}
+  .pos{color:var(--ink)}
+  .vlag{font-size:14px}
+  .v-w{color:var(--neg)}      /* ⚠ */
+  .v-t{color:var(--gold)}     /* ~  */
+  .v-o{color:var(--pos)}      /* ✓  */
+  .v-n{color:var(--navy-soft)}/* ★  */
+  tfoot td{padding:14px;font-weight:700;border-top:2px solid var(--navy);text-align:right;background:#f0ece2}
+  tfoot td.l{text-align:left;font-family:"Fraunces",serif;font-size:16px}
+
+  .legend{display:flex;flex-wrap:wrap;gap:16px;margin:14px 2px 0;color:var(--muted);font-size:12.5px}
+  .legend span b{font-weight:700}
+
+  /* states */
+  .state{max-width:440px;margin:9vh auto;background:var(--card);border:1px solid var(--line);
+    border-radius:18px;padding:30px 28px;box-shadow:0 24px 60px -36px #1c1b1855}
+  .state h2{font-family:"Fraunces",serif;font-weight:600;margin:0 0 6px;font-size:24px}
+  .state p{color:var(--muted);margin:0 0 18px;font-size:14px}
+  .state label{display:block;font:600 12px/1 "Public Sans";letter-spacing:.04em;color:var(--navy-soft);margin:0 0 7px;text-transform:uppercase}
+  .state input{width:100%;padding:12px 14px;border:1px solid var(--line2);border-radius:10px;background:#fff;font-size:15px}
+  .state button{margin-top:14px;width:100%;padding:12px;border:0;border-radius:10px;background:var(--navy);color:#fff;
+    font:600 14px/1 "Public Sans";letter-spacing:.03em;cursor:pointer}
+  .state button:hover{background:#0f2740}
+  .err{color:var(--neg);font-size:13px;margin-top:10px;min-height:16px}
+  .hidden{display:none!important}
+  .spin{width:30px;height:30px;border:3px solid var(--line2);border-top-color:var(--navy);border-radius:50%;
+    margin:0 auto;animation:r .8s linear infinite}
+  @keyframes r{to{transform:rotate(360deg)}}
+  .center{text-align:center;color:var(--muted);padding:40px}
+  footer{margin-top:26px;color:var(--muted);font-size:12px;text-align:center}
+</style>
+</head>
+<body>
+
+<!-- LOCK -->
+<div id="lock" class="state">
+  <h2>Finance · Grootboek detail</h2>
+  <p>Interne module van MVA Intelligence. Voer de toegangscode in.</p>
+  <label for="tok">Toegangscode</label>
+  <input id="tok" type="password" autocomplete="off" placeholder="••••••••" />
+  <button id="enter">Openen</button>
+  <div id="lockerr" class="err"></div>
+</div>
+
+<!-- LOADING -->
+<div id="loading" class="state hidden">
+  <div class="spin"></div>
+  <p style="text-align:center;margin-top:16px">Cijfers ophalen…</p>
+</div>
+
+<!-- APP -->
+<div id="app" class="wrap hidden">
+  <header class="top">
+    <div>
+      <div class="brand">MVA Intelligence · Finance</div>
+      <h1>Grootboek detail</h1>
+    </div>
+    <div class="peil" id="peil"></div>
+  </header>
+  <div class="goldrule"></div>
+
+  <div class="tabs" id="tabs" role="tablist">
+    <button class="tab" role="tab" data-ent="PRO" aria-selected="true">Pro Vastgoedgroep</button>
+    <button class="tab" role="tab" data-ent="VZ" aria-selected="false">Vastgoedzaak</button>
+  </div>
+
+  <div class="card">
+    <div class="cardhead">
+      <div class="name" id="entName"></div>
+      <div id="recon"></div>
+    </div>
+    <div style="overflow:auto">
+      <table>
+        <thead>
+          <tr>
+            <th class="l">GB</th>
+            <th class="l">Omschrijving</th>
+            <th>2025</th>
+            <th>2026 YTD</th>
+            <th>Op koers</th>
+            <th>&Delta; vs 2025</th>
+            <th>%</th>
+            <th>Vlag</th>
+          </tr>
+        </thead>
+        <tbody id="tbody"></tbody>
+        <tfoot id="tfoot"></tfoot>
+      </table>
+    </div>
+  </div>
+
+  <div class="legend">
+    <span><b class="num v-o">✓</b> stabiel</span>
+    <span><b class="num v-t">~</b> ± 20–50%</span>
+    <span><b class="num v-w">⚠</b> &gt; 50% afwijking</span>
+    <span><b class="num v-n">★</b> nieuw in 2026</span>
+    <span>“Op koers” = YTD × 12 / aantal maanden. Bron: SnelStart via Supabase.</span>
+  </div>
+
+  <footer id="foot"></footer>
+</div>
+
+<script>
+const FN = "/.netlify/functions/finance-grootboek";
+let TOKEN = "";
+let DATA = null;
+let CURRENT = "PRO";
+
+const $ = (id) => document.getElementById(id);
+const eur = new Intl.NumberFormat("nl-NL", { style: "currency", currency: "EUR" });
+const pct = new Intl.NumberFormat("nl-NL", { style: "percent", minimumFractionDigits: 0, maximumFractionDigits: 0 });
+
+function show(el){ el.classList.remove("hidden"); }
+function hide(el){ el.classList.add("hidden"); }
+
+$("enter").addEventListener("click", submit);
+$("tok").addEventListener("keydown", (e)=>{ if(e.key==="Enter") submit(); });
+
+async function submit(){
+  const t = $("tok").value.trim();
+  if(!t){ $("lockerr").textContent = "Vul de toegangscode in."; return; }
+  TOKEN = t;
+  $("lockerr").textContent = "";
+  hide($("lock")); show($("loading"));
+  try{
+    const res = await fetch(FN, { headers: { "x-finance-token": TOKEN } });
+    if(res.status === 401){ throw new Error("Onjuiste toegangscode."); }
+    if(!res.ok){ const j = await res.json().catch(()=>({})); throw new Error(j.error || ("Serverfout " + res.status)); }
+    DATA = await res.json();
+    hide($("loading")); show($("app"));
+    render();
+  }catch(e){
+    hide($("loading")); show($("lock"));
+    $("lockerr").textContent = e.message || String(e);
+  }
+}
+
+function monthsOf(dateStr){
+  if(!dateStr) return 12;
+  const m = parseInt(String(dateStr).slice(5,7), 10);
+  return m || 12;
+}
+function vlagFor(v2025, koers){
+  if(v2025 === 0) return koers !== 0 ? ["★","v-n","nieuw"] : ["✓","v-o","stabiel"];
+  const p = (koers - v2025) / Math.abs(v2025);
+  const a = Math.abs(p);
+  if(a >= 0.5) return ["⚠","v-w","groot"];
+  if(a >= 0.2) return ["~","v-t","matig"];
+  return ["✓","v-o","stabiel"];
+}
+function numCell(val, opts={}){
+  const cls = (val < -0.005) ? "neg" : "pos";
+  const txt = (opts.empty && Math.abs(val) < 0.005) ? "—" : eur.format(val);
+  return `<td class="num ${cls}">${txt}</td>`;
+}
+
+function setTabs(){
+  document.querySelectorAll(".tab").forEach(t=>{
+    const on = t.dataset.ent === CURRENT;
+    t.setAttribute("aria-selected", on ? "true":"false");
+    t.onclick = ()=>{ CURRENT = t.dataset.ent; render(); };
+  });
+}
+
+function render(){
+  setTabs();
+  const rows = DATA.rows.filter(r => r.entiteit === CURRENT);
+  const entName = CURRENT === "PRO" ? "Pro Vastgoedgroep B.V." : "Vastgoedzaak B.V.";
+  $("entName").textContent = entName;
+
+  const d2025 = rows[0]?.d2025, dytd = rows[0]?.dytd;
+  const months = monthsOf(dytd);
+  $("peil").innerHTML = `Standen &nbsp;<b>${fmtDate(d2025)}</b> &nbsp;·&nbsp; YTD <b>${fmtDate(dytd)}</b> (${months} mnd)`;
+
+  // group by categorie, preserving order of appearance
+  const order = []; const groups = {};
+  for(const r of rows){
+    const c = r.categorie || "Overig";
+    if(!groups[c]){ groups[c] = []; order.push(c); }
+    groups[c].push(r);
+  }
+
+  let tot25=0, totY=0, totK=0;
+  let html = "";
+  for(const cat of order){
+    html += `<tr class="catrow"><td colspan="8" class="l">${esc(cat)}</td></tr>`;
+    for(const r of groups[cat]){
+      const v25 = Number(r.v2025), vy = Number(r.vytd);
+      const koers = vy * 12 / months;
+      const delta = koers - v25;
+      const [vsym, vcls] = vlagFor(v25, koers);
+      const pctTxt = v25 === 0 ? "—" : pct.format((koers - v25)/Math.abs(v25));
+      tot25 += v25; totY += vy; totK += koers;
+      html += `<tr>
+        <td class="l gb num">${esc(r.gb_nr)}</td>
+        <td class="l oms">${esc(r.omschrijving||"")}</td>
+        ${numCell(v25,{empty:true})}
+        ${numCell(vy,{empty:true})}
+        ${numCell(koers,{empty:true})}
+        ${numCell(delta,{empty:true})}
+        <td class="num ${delta<-0.005?'neg':'pos'}">${pctTxt}</td>
+        <td class="vlag ${vcls}">${vsym}</td>
+      </tr>`;
+    }
+  }
+  $("tbody").innerHTML = html;
+
+  $("tfoot").innerHTML = `<tr>
+    <td class="l" colspan="2">Resultaat ${entName}</td>
+    <td class="num ${tot25<0?'neg':''}">${eur.format(tot25)}</td>
+    <td class="num ${totY<0?'neg':''}">${eur.format(totY)}</td>
+    <td class="num ${totK<0?'neg':''}">${eur.format(totK)}</td>
+    <td></td><td></td><td></td>
+  </tr>`;
+
+  // reconciliation vs controle (YTD)
+  const ctrlY = DATA.controle.find(c => c.entiteit===CURRENT && c.rapportagedatum===dytd);
+  const target = ctrlY ? Number(ctrlY.resultaat) : null;
+  const diff = target===null ? null : (totY - target);
+  if(diff===null){
+    $("recon").innerHTML = `<span class="badge bad"><span class="dot"></span>Geen controletotaal</span>`;
+  } else if(Math.abs(diff) < 0.005){
+    $("recon").innerHTML = `<span class="badge ok"><span class="dot"></span>Sluit op SnelStart · €0,00</span>`;
+  } else {
+    $("recon").innerHTML = `<span class="badge bad"><span class="dot"></span>Verschil ${eur.format(diff)}</span>`;
+  }
+
+  $("foot").textContent = "Gegenereerd " + new Date(DATA.generated_at).toLocaleString("nl-NL") + " · SnelStart blijft de bron; dit model is een overlay.";
+}
+
+function fmtDate(s){ if(!s) return "—"; const [y,m,d]=s.split("-"); return `${d}-${m}-${y}`; }
+function esc(s){ return String(s).replace(/[&<>"]/g, c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c])); }
+</script>
+</body>
+</html>
