@@ -1,13 +1,12 @@
 // MVA Intelligence — Finance-module
 // Netlify Function: levert Grootboek detail + controletotalen.
-// Roept twee SECURITY DEFINER-functies aan in het public-schema
-// (public.api_finance_grootboek / public.api_finance_controle), die alleen
-// de service-role mag uitvoeren. Het finance-schema blijft dicht voor de API.
+// Standaardroute: leest de Supabase Data API (PostgREST) op het public-schema,
+// via de service-sleutel — exact zoals de andere MvA-apps (o.a. Leadpool).
 //
-// Vereiste Netlify environment variables:
-//   SUPABASE_URL          bv. https://ehqtyhoeubchcwfavdzr.supabase.co
-//   SUPABASE_SERVICE_KEY  de service-role / secret key (NIET de publishable)
-//   FINANCE_TOKEN         vrij te kiezen wachtwoord voor toegang tot deze pagina
+// Vereiste Netlify environment variables (staan al ingesteld):
+//   SUPABASE_URL          https://ehqtyhoeubchcwfavdzr.supabase.co
+//   SUPABASE_SERVICE_KEY  service_role sleutel (server-side, geheim)
+//   FINANCE_TOKEN         wachtwoord voor toegang tot deze pagina
 
 exports.handler = async (event) => {
   const cors = {
@@ -15,7 +14,6 @@ exports.handler = async (event) => {
     "Access-Control-Allow-Headers": "x-finance-token, content-type",
     "Access-Control-Allow-Methods": "GET, OPTIONS",
   };
-
   if (event.httpMethod === "OPTIONS") return { statusCode: 204, headers: cors };
 
   const { SUPABASE_URL, SUPABASE_SERVICE_KEY, FINANCE_TOKEN } = process.env;
@@ -24,27 +22,35 @@ exports.handler = async (event) => {
   }
 
   const token = event.headers["x-finance-token"] || event.headers["X-Finance-Token"];
-  if (!FINANCE_TOKEN || token !== FINANCE_TOKEN) {
-    return json(401, cors, { error: "Geen toegang." });
-  }
+  if (!FINANCE_TOKEN || token !== FINANCE_TOKEN) return json(401, cors, { error: "Geen toegang." });
 
-  const base = SUPABASE_URL.replace(/\/+$/, "") + "/rest/v1/rpc";
+  const base = SUPABASE_URL.replace(/\/+$/, "") + "/rest/v1";
   const headers = {
     apikey: SUPABASE_SERVICE_KEY,
     Authorization: "Bearer " + SUPABASE_SERVICE_KEY,
-    "content-type": "application/json",
+    Accept: "application/json",
   };
 
   try {
+    const gdUrl = base +
+      "/v_finance_grootboek" +
+      "?select=entiteit,gb_nr,omschrijving,categorie,d2025,dytd,v2025,vytd" +
+      "&order=entiteit,gb_nr";
+    const ctUrl = base +
+      "/v_finance_controle" +
+      "?select=entiteit,rapportagedatum,resultaat";
+
     const [gdRes, ctRes] = await Promise.all([
-      fetch(`${base}/api_finance_grootboek`, { method: "POST", headers, body: "{}" }),
-      fetch(`${base}/api_finance_controle`, { method: "POST", headers, body: "{}" }),
+      fetch(gdUrl, { headers }),
+      fetch(ctUrl, { headers }),
     ]);
-    if (!gdRes.ok) throw new Error("api_finance_grootboek " + gdRes.status + ": " + (await gdRes.text()));
-    if (!ctRes.ok) throw new Error("api_finance_controle " + ctRes.status + ": " + (await ctRes.text()));
+
+    if (!gdRes.ok) return json(502, cors, { error: "Grootboek ophalen mislukt (" + gdRes.status + "): " + (await gdRes.text()) });
+    if (!ctRes.ok) return json(502, cors, { error: "Controle ophalen mislukt (" + ctRes.status + "): " + (await ctRes.text()) });
 
     const rows = await gdRes.json();
     const controle = await ctRes.json();
+
     return json(200, cors, { rows, controle, generated_at: new Date().toISOString() });
   } catch (e) {
     return json(502, cors, { error: String((e && e.message) || e) });
