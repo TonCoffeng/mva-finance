@@ -1,9 +1,10 @@
 {
   "name": "mva-finance",
   "version": "1.0.0",
-  "description": "MVA Intelligence - Finance app (WWFT, grootboek, begroting, scenario)",
+  "description": "MVA Intelligence - Finance app (overzicht, realisatie, begroting, scenario)",
   "private": true,
   "dependencies": {
-    "@netlify/blobs": "^8.1.0"
+    "@netlify/blobs": "^8.1.0",
+    "pg": "^8.13.1"
   }
 }
