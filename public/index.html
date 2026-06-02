@@ -51,6 +51,13 @@
   .legenda{display:flex;gap:16px;flex-wrap:wrap;margin-bottom:18px;font-size:12px;color:var(--grijs)}
   .legenda .dot{display:inline-block;width:10px;height:10px;border-radius:3px;vertical-align:1px;margin-right:5px}
 
+  .filterbar{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:18px}
+  .filterbar button{font-family:inherit;cursor:pointer;font-size:13px;font-weight:600;border:1.5px solid var(--rand);background:var(--wit);color:var(--grijs);border-radius:20px;padding:7px 14px;display:inline-flex;align-items:center;gap:7px;transition:border-color .15s,color .15s,background .15s}
+  .filterbar button:hover{border-color:var(--navy);color:var(--navy)}
+  .filterbar button.actief{border-color:var(--navy);background:var(--navy);color:#fff}
+  .filterbar .telw{font-size:11px;font-weight:700;background:rgba(26,43,95,.08);color:inherit;padding:1px 7px;border-radius:10px;min-width:20px;text-align:center}
+  .filterbar button.actief .telw{background:rgba(255,255,255,.22)}
+
   .lijst{display:flex;flex-direction:column;gap:10px}
   .zaak{background:var(--wit);border:1px solid var(--rand);border-left:4px solid var(--c-blanco);border-radius:10px;padding:13px 15px}
   .zaak-top{display:flex;justify-content:space-between;align-items:flex-start;gap:10px;flex-wrap:wrap}
@@ -110,6 +117,8 @@
     <span><span class="dot" style="background:var(--c-blanco)"></span>Blanco — nog niet gestart</span>
   </div>
 
+  <div class="filterbar" id="filterbar"></div>
+
   <div class="lijst" id="lijst">
     <div class="laden">Laden…</div>
   </div>
@@ -123,6 +132,7 @@
 const API = '/.netlify/functions/wwft';
 const WACHTWOORD = 'MVA2026!';
 let zaken = [];
+let filter = 'alle';
 
 function esc(s){ return String(s==null?'':s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])); }
 function euro(n){ return n==null ? '—' : '€ ' + Number(n).toLocaleString('nl-NL',{minimumFractionDigits:2,maximumFractionDigits:2}); }
@@ -202,13 +212,33 @@ function typeLabel(z){
   return z.type ? z.type.replace(/^00ALGEM\s*/,'') : '';
 }
 
+function setFilter(f){ filter = (filter===f) ? 'alle' : f; render(); }
+
 function render(){
   let groen=0, aandacht=0;
+  const telling = {alle:zaken.length, groen:0, oranje:0, rood:0, blanco:0};
+  for(const z of zaken){ telling[kleur(z)]++; }
+  const fknoppen = [
+    ['alle','Alle',null],
+    ['groen','Courtage vrij','var(--c-groen)'],
+    ['rood','Niet compleet','var(--c-rood)'],
+    ['oranje','Weigert','var(--c-oranje)'],
+    ['blanco','Nog niet gestart','var(--c-blanco)'],
+  ];
+  document.getElementById('filterbar').innerHTML = fknoppen.map(b=>{
+    const act = filter===b[0] ? ' actief' : '';
+    const dot = b[2] ? `<span style="width:9px;height:9px;border-radius:3px;display:inline-block;background:${b[2]}"></span>` : '';
+    return `<button class="${act.trim()}" onclick="setFilter('${b[0]}')">${dot}${b[1]}<span class="telw">${telling[b[0]]}</span></button>`;
+  }).join('');
+
   let html = '';
+  let zichtbaar = 0;
   for(const z of zaken){
     const k = kleur(z); const c = conf[k];
     if(k==='groen') groen++;
     if(k==='rood'||k==='oranje') aandacht++;
+    if(filter!=='alle' && k!==filter) continue;
+    zichtbaar++;
     html += `
     <div class="zaak" style="border-left-color:${c.bar}">
       <div class="zaak-top">
@@ -236,6 +266,7 @@ function render(){
     </div>`;
   }
   if(!zaken.length) html = '<div class="leeg">Geen actuele WWFT-zaken.</div>';
+  else if(!zichtbaar) html = '<div class="leeg">Geen zaken in dit filter.</div>';
   document.getElementById('lijst').innerHTML = html;
 
   document.getElementById('totalen').innerHTML = `
