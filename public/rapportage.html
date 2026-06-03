@@ -1,0 +1,221 @@
+<!doctype html>
+<html lang="nl">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Rapportage — MVA Finance</title>
+<link href="https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500;700&display=swap" rel="stylesheet" />
+<style>
+  :root{--navy:#1A2B5F;--navy-light:#25346c;--oranje:#E8500A;--oranje-light:#ff6a20;
+    --wit:#fff;--grijs:#f4f5f8;--grijs-mid:#e2e5ed;--grijs-tekst:#6b7280;--groen:#16a34a;--rood:#dc2626;--geel:#d97706;
+    --infobg:#eef3fb;--infoink:#1d4ed8;}
+  *{box-sizing:border-box}html,body{margin:0}
+  body{font-family:'Roboto',sans-serif;background:var(--grijs);color:#1f2433}
+  .num{font-variant-numeric:tabular-nums lining-nums}
+  .header{background:var(--navy);padding:16px 20px;display:flex;align-items:center;justify-content:space-between;gap:10px;position:sticky;top:0;z-index:100;box-shadow:0 2px 8px rgba(0,0,0,.2)}
+  .header-title{color:#fff;font-size:17px;font-weight:700;letter-spacing:.3px}.header-sub{color:rgba(255,255,255,.6);font-size:12px}
+  .header-badge{background:var(--oranje);color:#fff;border-radius:20px;padding:4px 12px;font-size:13px;font-weight:600;white-space:nowrap}
+  .tabs{display:flex;gap:8px;padding:16px 20px 0;flex-wrap:wrap;max-width:1320px;margin:0 auto}
+  .tab{text-decoration:none;background:#fff;color:var(--navy);border:1.5px solid var(--grijs-mid);border-radius:999px;padding:9px 18px;font-size:14px;font-weight:600}
+  .tab.active{background:var(--navy);color:#fff;border-color:var(--navy)}.tab:hover{border-color:var(--navy)}
+  .wrap{max-width:1320px;margin:0 auto;padding:20px}
+  .note{display:flex;flex-wrap:wrap;align-items:center;gap:10px;justify-content:space-between;background:#fff7e6;border:1px solid #fde6b0;border-radius:12px;padding:11px 15px;margin-bottom:14px;font-size:13px;color:#92620a}
+  .note .reset{appearance:none;border:1.5px solid var(--grijs-mid);background:#fff;color:var(--navy);font-weight:600;font-size:12.5px;padding:7px 13px;border-radius:999px;cursor:pointer;font-family:inherit}
+  .toolbar{display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:12px;margin-bottom:14px}
+  .ent-switch,.per-switch{display:flex;gap:8px;align-items:center}
+  .eb{background:#fff;color:var(--navy);border:1.5px solid var(--grijs-mid);border-radius:999px;padding:8px 16px;font-size:14px;font-weight:600;cursor:pointer;font-family:inherit}
+  .eb.on{background:var(--navy);color:#fff;border-color:var(--navy)}
+  .pb{background:#fff;color:var(--navy);border:1.5px solid var(--grijs-mid);border-radius:999px;padding:6px 13px;font-size:13px;font-weight:600;cursor:pointer;font-family:inherit}
+  .pb.on{background:var(--infoink);color:#fff;border-color:var(--infoink)}
+  .per-lbl{font-size:12px;color:var(--grijs-tekst);font-weight:600}
+  .toggle{display:inline-flex;align-items:center;gap:9px;font-size:13px;font-weight:600;color:var(--grijs-tekst);cursor:pointer}
+  .sw{width:40px;height:23px;border-radius:999px;background:var(--grijs-mid);position:relative;transition:.15s;display:inline-block}
+  .sw::after{content:"";position:absolute;top:2px;left:2px;width:19px;height:19px;border-radius:50%;background:#fff;transition:.15s;box-shadow:0 1px 2px #0003}
+  .sw.on{background:var(--navy)}.sw.on::after{transform:translateX(17px)}
+  .card{background:#fff;border-radius:16px;box-shadow:0 4px 20px rgba(0,0,0,.06);overflow:hidden}
+  .cardhead{display:flex;flex-wrap:wrap;justify-content:space-between;align-items:center;gap:12px;padding:18px 20px;border-bottom:1px solid var(--grijs-mid)}
+  .cardhead .name{font-size:19px;font-weight:700;color:var(--navy)}
+  .result{display:flex;align-items:baseline;gap:10px}.result .lbl{font-size:11px;font-weight:700;letter-spacing:.05em;text-transform:uppercase;color:var(--grijs-tekst)}
+  .result .val{font-size:20px;font-weight:700;color:var(--navy)}.result .val.neg{color:var(--rood)}
+  table{width:100%;border-collapse:collapse}
+  thead th{background:#f8fafc;color:var(--grijs-tekst);font-size:11px;letter-spacing:.04em;text-transform:uppercase;font-weight:700;text-align:right;padding:10px 12px;border-bottom:1px solid var(--grijs-mid);white-space:nowrap}
+  thead th.l{text-align:left}
+  thead th .sub{display:block;font-weight:400;text-transform:none;letter-spacing:0;font-size:10px;color:#9aa1b0}
+  thead th.corr{color:var(--infoink)}
+  .catrow td{background:#eef0f4;color:var(--navy);font-size:11px;letter-spacing:.07em;text-transform:uppercase;font-weight:700;padding:9px 12px}
+  .subrow td{background:#fbfcfe;font-weight:700;border-bottom:1px solid var(--grijs-mid);text-align:right;padding:9px 12px}
+  .subrow td.l{text-align:left;color:var(--grijs-tekst)}
+  tbody td{padding:8px 12px;border-bottom:1px solid #eef0f4;text-align:right;white-space:nowrap;vertical-align:middle}
+  tbody td.l{text-align:left}
+  tr.corrected td{background:var(--infobg)}
+  tr.opmrow td{background:var(--infobg);border-bottom:1px solid #eef0f4;padding:0 12px 9px 38px;text-align:left;white-space:normal}
+  .opm{font-size:12px;color:var(--infoink);font-style:italic;display:flex;align-items:center;gap:6px}
+  .opm input{flex:1;border:1px solid #cdd9ef;border-radius:7px;padding:5px 9px;font:italic 12px 'Roboto';color:#1f2433;background:#fff;max-width:520px}
+  .gb{color:var(--navy);font-weight:600}.ref{color:var(--grijs-tekst)}.pos{color:var(--groen)}.neg{color:var(--rood)}
+  .corrinput{width:104px;text-align:right;padding:6px 8px;border:1.5px solid #cdd9ef;border-radius:8px;font:500 13px 'Roboto';font-variant-numeric:tabular-nums;color:var(--infoink);background:#fff}
+  .corrinput:focus{outline:none;border-color:var(--infoink)}
+  .corrinput.filled{background:#fff;border-color:var(--infoink)}
+  .comm{font-weight:600}
+  .begroot{color:var(--grijs-tekst)}
+  .hide2025 .c2025{display:none}
+  tfoot td{padding:13px 12px;font-weight:700;font-size:14px;border-top:2px solid var(--navy);background:#fbfcfe;text-align:right}
+  tfoot td.l{text-align:left;color:var(--navy)}
+  .cons{display:flex;flex-wrap:wrap;justify-content:space-between;align-items:center;gap:14px;margin-top:16px;padding:18px 20px;background:var(--navy);color:#fff;border-radius:16px}
+  .cons .lbl{font-size:15px;font-weight:700}.cons .val{font-size:24px;font-weight:700}.cons .val.neg{color:#fda4a4}.cons .sub{font-size:12.5px;color:rgba(255,255,255,.7)}.cons .sub b{color:#fff}
+  .state{max-width:420px;margin:9vh auto;background:#fff;border-radius:18px;padding:30px 28px;box-shadow:0 20px 50px -28px rgba(26,43,95,.4)}
+  .state h2{font-size:21px;font-weight:700;margin:0 0 6px;color:var(--navy)}.state p{color:var(--grijs-tekst);margin:0 0 18px;font-size:14px}
+  .state label{display:block;font-size:12px;font-weight:700;letter-spacing:.04em;text-transform:uppercase;color:var(--navy);margin-bottom:7px}
+  .state input{width:100%;padding:12px 14px;border:1.5px solid var(--grijs-mid);border-radius:10px;font-size:15px;font-family:inherit}
+  .state button{margin-top:14px;width:100%;padding:13px;border:0;border-radius:10px;background:var(--oranje);color:#fff;font-weight:700;font-size:15px;cursor:pointer;font-family:inherit}
+  .state button:hover{background:var(--oranje-light)}
+  .err{color:var(--rood);font-size:13px;margin-top:10px;min-height:16px}
+  .hidden{display:none!important}
+  .spin{width:30px;height:30px;border:3px solid var(--grijs-mid);border-top-color:var(--navy);border-radius:50%;margin:0 auto;animation:r .8s linear infinite}@keyframes r{to{transform:rotate(360deg)}}
+  footer{margin-top:20px;color:#9aa1b0;font-size:12px;text-align:center}
+</style>
+</head>
+<body>
+
+<div id="lock" class="state">
+  <h2>Finance · Rapportage</h2><p>Interne module van MVA Intelligence. Voer de toegangscode in.</p>
+  <label for="tok">Toegangscode</label><input id="tok" type="password" autocomplete="off" placeholder="••••••••" />
+  <button id="enter">Openen</button><div id="lockerr" class="err"></div>
+</div>
+<div id="loading" class="state hidden"><div class="spin"></div><p style="text-align:center;margin-top:16px">Rapportage ophalen…</p></div>
+
+<div id="app" class="hidden hide2025">
+  <div class="header">
+    <div><div class="header-title">MVA Intelligence · Finance</div><div class="header-sub" id="peil">Rapportage</div></div>
+    <div class="header-badge">Rapportage</div>
+  </div>
+  <div class="tabs">
+    <a class="tab" href="overzicht.html">Overzicht</a>
+    <a class="tab" href="grootboek.html">Realisatie</a>
+    <a class="tab active" href="rapportage.html">Rapportage</a>
+    <a class="tab" href="scenario.html">Scenario</a>
+  </div>
+  <div class="wrap">
+    <div class="note"><span>Concept ter bespreking. Je voert per regel een <b>correctie</b> in (wordt opgeteld bij de werkelijkheid) met een opmerking — de echte waarde blijft staan. <b>Correcties worden in deze stap nog niet bewaard.</b></span><button class="reset" id="reset">Correcties wissen</button></div>
+    <div class="toolbar">
+      <div class="ent-switch"><button class="eb on" data-ent="PRO">Pro Vastgoedgroep</button><button class="eb" data-ent="VZ">Vastgoedzaak</button></div>
+      <div style="display:flex;gap:16px;align-items:center;flex-wrap:wrap">
+        <div class="per-switch"><span class="per-lbl">Periode</span>
+          <button class="pb on" data-per="ytd">t/m mei</button>
+          <button class="pb" data-per="maand" title="beschikbaar zodra rapportage-archief gevuld is">maand</button>
+          <button class="pb" data-per="kwartaal" title="beschikbaar zodra rapportage-archief gevuld is">kwartaal</button>
+        </div>
+        <label class="toggle"><span class="sw" id="sw2025"></span> Vergelijk met 2025</label>
+      </div>
+    </div>
+    <div class="card">
+      <div class="cardhead"><div class="name" id="entName"></div>
+        <div class="result"><span class="lbl">Resultaat commercieel</span><span class="val" id="entResult"></span></div></div>
+      <div style="overflow:auto">
+        <table>
+          <thead><tr>
+            <th class="l">GB</th><th class="l">Omschrijving</th>
+            <th class="c2025">2025<span class="sub">t/m mei</span></th>
+            <th>2026<span class="sub">werkelijk</span></th>
+            <th class="corr">Correctie<span class="sub">+ / −</span></th>
+            <th class="corr">2026<span class="sub">commercieel</span></th>
+            <th>Begroting<span class="sub">heel jaar</span></th>
+          </tr></thead>
+          <tbody id="tbody"></tbody>
+        </table>
+      </div>
+    </div>
+    <div class="cons"><div><div class="lbl">Geconsolideerd · commercieel beeld</div><div class="sub" id="consSub"></div></div><div class="val" id="consVal"></div></div>
+    <footer id="foot"></footer>
+  </div>
+</div>
+
+<script>
+const FN="/.netlify/functions/finance-begroting";
+let TOKEN="",DATA=null,ROWS=[],CURRENT="PRO";
+const $=id=>document.getElementById(id);
+const eur=new Intl.NumberFormat("nl-NL",{style:"currency",currency:"EUR"});
+const show=el=>el.classList.remove("hidden"),hide=el=>el.classList.add("hidden");
+$("enter").addEventListener("click",submit);
+$("tok").addEventListener("keydown",e=>{if(e.key==="Enter")submit();});
+$("reset").addEventListener("click",()=>{ROWS.forEach(r=>{r.correctie=0;r.opmerking="";});render();});
+$("sw2025").addEventListener("click",()=>{$("sw2025").classList.toggle("on");$("app").classList.toggle("hide2025",!$("sw2025").classList.contains("on"));});
+document.querySelectorAll(".pb").forEach(b=>b.addEventListener("click",()=>{
+  if(b.dataset.per!=="ytd"){ alert("Filteren per "+b.dataset.per+" wordt beschikbaar zodra het rapportage-archief gevuld is met de periodecijfers."); return; }
+  document.querySelectorAll(".pb").forEach(x=>x.classList.remove("on"));b.classList.add("on");
+}));
+async function submit(){
+  const t=$("tok").value.trim();if(!t){$("lockerr").textContent="Vul de toegangscode in.";return;}
+  TOKEN=t;$("lockerr").textContent="";hide($("lock"));show($("loading"));
+  try{
+    const res=await fetch(FN,{headers:{"x-finance-token":TOKEN}});
+    if(res.status===401)throw new Error("Onjuiste toegangscode.");
+    if(!res.ok){const j=await res.json().catch(()=>({}));throw new Error(j.error||("Serverfout "+res.status));}
+    DATA=await res.json();
+    ROWS=DATA.rows.map((r,i)=>({...r,_i:i,begroot:r.begroot==null?null:Number(r.begroot),correctie:0,opmerking:""}));
+    hide($("loading"));show($("app"));try{sessionStorage.setItem("mva_fin_token",TOKEN);}catch(e){}
+    const p=DATA.peil||{};$("peil").innerHTML=`Werkelijk t/m ${fmtDate(p.ytd)} · begroting heel jaar`;
+    render();
+  }catch(e){hide($("loading"));show($("lock"));$("lockerr").textContent=e.message||String(e);}
+}
+function ytdMonths(){const p=(DATA&&DATA.peil&&DATA.peil.ytd)||"";const m=parseInt(String(p).slice(5,7),10);return m||5;}
+function setEnt(){document.querySelectorAll(".eb").forEach(b=>{b.classList.toggle("on",b.dataset.ent===CURRENT);b.onclick=()=>{CURRENT=b.dataset.ent;render();};});}
+
+function render(){
+  setEnt();
+  const entName=CURRENT==="PRO"?"Pro Vastgoedgroep B.V.":"Vastgoedzaak B.V.";$("entName").textContent=entName;
+  const rows=ROWS.filter(r=>r.entiteit===CURRENT);
+  const m=ytdMonths();
+  const order=[],groups={};
+  for(const r of rows){const b=r.blok||"Overig";if(!groups[b]){groups[b]=[];order.push(b);}groups[b].push(r);}
+  let html="";
+  for(const blok of order){
+    html+=`<tr class="catrow"><td colspan="7" class="l">${esc(blok)}</td></tr>`;
+    let sw=0;
+    for(const r of groups[blok]){
+      const v25j=Number(r.v2025)||0, vy=Number(r.vytd)||0, bval=r.begroot;
+      const v25ytd=v25j*m/12;
+      const corr=Number(r.correctie)||0;
+      const comm=vy+corr;
+      sw+=comm;
+      const hasCorr=Math.abs(corr)>0.005 || (r.opmerking&&r.opmerking.length);
+      html+=`<tr class="${hasCorr?'corrected':''}">
+        <td class="l gb num">${esc(r.gb_nr)}</td><td class="l">${esc(r.omschrijving||"")}</td>
+        <td class="num ref c2025">${num0(v25ytd)}</td>
+        <td class="num">${money(vy)}</td>
+        <td><input class="corrinput num ${corr?'filled':''}" data-i="${r._i}" data-f="correctie" type="number" step="1" value="${corr?corr:''}" placeholder="0"></td>
+        <td class="num comm ${comm<0?'neg':(comm>0?'pos':'')}">${money(comm)}</td>
+        <td class="num begroot">${bval==null?'—':money(bval)}</td>
+      </tr>`;
+      if(hasCorr){
+        html+=`<tr class="opmrow"><td colspan="7"><div class="opm">✎ <input data-i="${r._i}" data-f="opmerking" type="text" placeholder="waarom corrigeer je? (bv. te veel gefactureerd, commercieel klopt €132k/jaar)" value="${esc(r.opmerking||"")}"></div></td></tr>`;
+      }
+    }
+    html+=`<tr class="subrow"><td class="l" colspan="5">Subtotaal ${esc(blok)} · commercieel</td><td class="num ${sw<0?'neg':''}">${eur.format(sw)}</td><td></td></tr>`;
+  }
+  $("tbody").innerHTML=html;
+  // bind inputs
+  document.querySelectorAll(".corrinput").forEach(inp=>inp.addEventListener("input",()=>{
+    const i=+inp.dataset.i;ROWS[i].correctie=inp.value.trim()===""?0:Number(inp.value);
+    render(); // herteken zodat opmerkingenregel verschijnt/verdwijnt + commercieel meerekent
+  }));
+  document.querySelectorAll('.opm input').forEach(inp=>inp.addEventListener("input",()=>{
+    const i=+inp.dataset.i;ROWS[i].opmerking=inp.value;updateTotals();
+  }));
+  updateTotals();
+}
+function commSum(ent){return ROWS.filter(r=>r.entiteit===ent).reduce((a,r)=>a+((Number(r.vytd)||0)+(Number(r.correctie)||0)),0);}
+function updateTotals(){
+  const cur=commSum(CURRENT);$("entResult").textContent=eur.format(cur);$("entResult").classList.toggle("neg",cur<0);
+  const P=commSum("PRO"),V=commSum("VZ"),tot=P+V;
+  $("consVal").textContent=eur.format(tot);$("consVal").classList.toggle("neg",tot<0);
+  $("consSub").innerHTML=`Pro <b>${eur.format(P)}</b> + VGZ <b>${eur.format(V)}</b> · werkelijk + correcties`;
+  $("foot").textContent="Werkelijkheid uit SnelStart (laag 1, blijft staan). Correcties = commercieel beeld (laag 2). Periodefilter maand/kwartaal volgt zodra het rapportage-archief gevuld is.";
+}
+function money(v){if(v==null||Math.abs(v)<0.005)return '<span class="ref">—</span>';return `<span class="${v<0?'neg':'pos'}">${eur.format(v)}</span>`;}
+function num0(v){const x=Number(v)||0;if(Math.abs(x)<0.005)return '<span class="ref">—</span>';return `<span class="${x<0?'neg':'pos'}">${eur.format(x)}</span>`;}
+function fmtDate(s){if(!s)return"";const[y,m,d]=String(s).split("-");return `${d}-${m}-${y}`;}
+function esc(s){return String(s==null?"":s).replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));}
+(function(){try{var s=sessionStorage.getItem("mva_fin_token");if(s){$("tok").value=s;submit();}}catch(e){}})();
+</script>
+</body>
+</html>

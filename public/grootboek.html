@@ -74,7 +74,7 @@
   <div class="tabs">
     <a class="tab" href="overzicht.html">Overzicht</a>
     <a class="tab active" href="grootboek.html">Realisatie</a>
-    <a class="tab" href="begroting.html">Begroting</a>
+    <a class="tab" href="rapportage.html">Rapportage</a>
     <a class="tab" href="scenario.html">Scenario</a>
   </div>
   <div class="wrap">
@@ -104,7 +104,7 @@
 </div>
 
 <script>
-const FN="/.netlify/functions/finance-grootboek";
+const FN="/.netlify/functions/finance-data";
 let TOKEN="",DATA=null,CURRENT="PRO";
 const $=id=>document.getElementById(id);
 const eur=new Intl.NumberFormat("nl-NL",{style:"currency",currency:"EUR"});
