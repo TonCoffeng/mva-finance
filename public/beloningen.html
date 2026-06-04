@@ -80,6 +80,14 @@
   .toast.fout{background:var(--rood)}
   .footer{text-align:center;font-size:12px;color:var(--zand);margin-top:32px}
 
+  .type-filter{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:14px}
+  .tf-btn{font-family:inherit;cursor:pointer;font-size:13px;font-weight:600;padding:7px 14px;border-radius:20px;border:1px solid var(--rand);background:var(--wit);color:var(--grijs)}
+  .tf-btn:hover{border-color:var(--navy);color:var(--navy)}
+  .tf-btn.actief{background:var(--navy);border-color:var(--navy);color:#fff}
+  .type-chip{display:inline-block;font-size:11px;font-weight:600;padding:2px 8px;border-radius:6px;margin-right:6px}
+  .type-chip.lead{background:var(--c-bevestigd-bg);color:var(--c-bevestigd-tx)}
+  .type-chip.hyp{background:var(--c-concept-bg);color:var(--c-concept-tx)}
+
   @media (max-width:640px){ .titel-h{font-size:24px} }
 </style>
 </head>
@@ -99,7 +107,7 @@
   <header>
     <div>
       <div class="titel-h">Beloningen</div>
-      <div class="sub">&euro;175 voor de gevende makelaar bij een geslaagde doorgegeven lead uit de pool</div>
+      <div class="sub">&euro;175 voor een geslaagde doorgegeven pool-lead &middot; &euro;650 voor een hypotheeklead doorgegeven aan de Hypotheekshop</div>
     </div>
     <a class="terug" href="https://mva-intelligence.netlify.app/">&larr; Terug naar portal</a>
   </header>
@@ -108,7 +116,13 @@
 
   <div class="balk">
     <button class="btn-scan" id="btn-scan" onclick="scan()">&#128269; Scan nieuwe deals</button>
-    <span class="scan-note">Zoekt pool-leads die op &lsquo;deal&rsquo; staan en zet ze op de conceptlijst.</span>
+    <span class="scan-note">Zoekt pool-deals (&euro;175) &eacute;n hypotheek-doorverwijzingen (&euro;650) en zet ze als concept op de lijst.</span>
+  </div>
+
+  <div class="type-filter" id="type-filter">
+    <button class="tf-btn actief" onclick="setType('alle', this)">Alle</button>
+    <button class="tf-btn" onclick="setType('lead_175', this)">&#127968; Bezichtiging &middot; &euro;175</button>
+    <button class="tf-btn" onclick="setType('hypotheek_650', this)">&#128176; Hypotheek &middot; &euro;650</button>
   </div>
 
   <div class="lijst" id="lijst">
@@ -124,6 +138,7 @@
 const API = '/.netlify/functions/beloningen';
 const WACHTWOORD = 'MVA2026!';
 let beloningen = [];
+let huidigType = 'alle';
 
 function esc(s){ return String(s==null?'':s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])); }
 function euro(n){ return '\u20ac ' + Number(n||0).toLocaleString('nl-NL',{minimumFractionDigits:2,maximumFractionDigits:2}); }
@@ -183,6 +198,18 @@ const conf = {
   vervallen:{bar:'var(--c-vervallen)', bg:'var(--c-vervallen-bg)', tx:'var(--c-vervallen-tx)', label:'Vervallen'},
 };
 
+const typeConf = {
+  lead_175:      { klasse:'lead', label:'Bezichtiging' },
+  hypotheek_650: { klasse:'hyp',  label:'Hypotheek' },
+};
+
+function setType(t, btn){
+  huidigType = t;
+  document.querySelectorAll('#type-filter .tf-btn').forEach(b=>b.classList.remove('actief'));
+  if(btn) btn.classList.add('actief');
+  render();
+}
+
 function actiesHtml(b){
   const id = b.id;
   if(b.status === 'concept'){
@@ -204,11 +231,13 @@ function actiesHtml(b){
 }
 
 function render(){
+  const zichtbaar = beloningen.filter(b => huidigType==='alle' || (b.type||'lead_175')===huidigType);
   const telling = {concept:0, bevestigd:0, uitbetaald:0, vervallen:0};
   let openBedrag = 0, uitbetaaldBedrag = 0;
   let html = '';
-  for(const b of beloningen){
+  for(const b of zichtbaar){
     const c = conf[b.status] || conf.concept;
+    const tc = typeConf[b.type] || typeConf.lead_175;
     telling[b.status] = (telling[b.status]||0) + 1;
     if(b.status==='concept' || b.status==='bevestigd') openBedrag += Number(b.bedrag||0);
     if(b.status==='uitbetaald') uitbetaaldBedrag += Number(b.bedrag||0);
@@ -218,7 +247,7 @@ function render(){
         <div style="min-width:0">
           <div class="bel-makelaar">${esc(b.gevende_makelaar||'Onbekende makelaar')}</div>
           <div class="bel-klant">Lead: ${esc(b.klant_naam||'')}${b.adres ? ' &middot; '+esc(b.adres) : ''}</div>
-          <div class="bel-meta">${b.factuurnummer ? esc(b.factuurnummer)+' &middot; ' : ''}aangemaakt ${datumNL(b.aangemaakt_op)}</div>
+          <div class="bel-meta"><span class="type-chip ${tc.klasse}">${tc.label}</span>${b.factuurnummer ? esc(b.factuurnummer)+' &middot; ' : ''}aangemaakt ${datumNL(b.aangemaakt_op)}</div>
         </div>
         <div class="bel-rechts">
           <span class="chip" style="background:${c.bg};color:${c.tx}">${c.label}</span>
@@ -228,7 +257,11 @@ function render(){
       <div class="acties">${actiesHtml(b)}</div>
     </div>`;
   }
-  if(!beloningen.length) html = '<div class="leeg">Nog geen beloningen. Klik op &ldquo;Scan nieuwe deals&rdquo; om pool-deals op te halen.</div>';
+  if(!zichtbaar.length){
+    html = '<div class="leeg">' + (beloningen.length
+      ? 'Geen beloningen in dit filter.'
+      : 'Nog geen beloningen. Klik op &ldquo;Scan nieuwe deals&rdquo; om pool-deals en hypotheek-doorverwijzingen op te halen.') + '</div>';
+  }
   document.getElementById('lijst').innerHTML = html;
 
   document.getElementById('totalen').innerHTML = `
