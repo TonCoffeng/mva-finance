@@ -88,6 +88,12 @@
   .type-chip.lead{background:var(--c-bevestigd-bg);color:var(--c-bevestigd-tx)}
   .type-chip.hyp{background:var(--c-concept-bg);color:var(--c-concept-tx)}
 
+  .lead-link{color:var(--navy);font-weight:600;text-decoration:none;border-bottom:1px dashed var(--zand)}
+  .lead-link:hover{border-bottom-color:var(--navy)}
+  .filter-label{font-size:11px;text-transform:uppercase;letter-spacing:.06em;color:var(--grijs);margin:0 0 6px 2px}
+  .totaal-onder{display:flex;justify-content:space-between;align-items:center;gap:12px;background:var(--navy);color:#fff;border-radius:12px;padding:16px 20px;margin-top:18px;font-size:14px}
+  .totaal-onder strong{font-size:22px;font-weight:700}
+
   @media (max-width:640px){ .titel-h{font-size:24px} }
 </style>
 </head>
@@ -119,15 +125,26 @@
     <span class="scan-note">Zoekt pool-deals (&euro;175) &eacute;n hypotheek-doorverwijzingen (&euro;650) en zet ze als concept op de lijst.</span>
   </div>
 
+  <div class="filter-label">Type</div>
   <div class="type-filter" id="type-filter">
     <button class="tf-btn actief" onclick="setType('alle', this)">Alle</button>
     <button class="tf-btn" onclick="setType('lead_175', this)">&#127968; Bezichtiging &middot; &euro;175</button>
     <button class="tf-btn" onclick="setType('hypotheek_650', this)">&#128176; Hypotheek &middot; &euro;650</button>
   </div>
 
+  <div class="filter-label">Status</div>
+  <div class="type-filter" id="status-filter">
+    <button class="tf-btn actief" onclick="setStatus('alle', this)">Alle</button>
+    <button class="tf-btn" onclick="setStatus('concept', this)">Concept</button>
+    <button class="tf-btn" onclick="setStatus('definitief', this)">Definitief</button>
+    <button class="tf-btn" onclick="setStatus('vervallen', this)">Vervallen</button>
+  </div>
+
   <div class="lijst" id="lijst">
     <div class="laden">Laden&hellip;</div>
   </div>
+
+  <div class="totaal-onder" id="totaal-onder" style="display:none"></div>
 
   <div class="footer"><b>MvA Intelligence</b> &middot; Finance &middot; Beloningen &middot; 2026</div>
 </div>
@@ -139,6 +156,8 @@ const API = '/.netlify/functions/beloningen';
 const WACHTWOORD = 'MVA2026!';
 let beloningen = [];
 let huidigType = 'alle';
+let huidigStatus = 'alle';
+const LEADPOOL = 'https://leadpool.makelaarsvan.nl';
 
 function esc(s){ return String(s==null?'':s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])); }
 function euro(n){ return '\u20ac ' + Number(n||0).toLocaleString('nl-NL',{minimumFractionDigits:2,maximumFractionDigits:2}); }
@@ -210,6 +229,27 @@ function setType(t, btn){
   render();
 }
 
+function setStatus(s, btn){
+  huidigStatus = s;
+  document.querySelectorAll('#status-filter .tf-btn').forEach(b=>b.classList.remove('actief'));
+  if(btn) btn.classList.add('actief');
+  render();
+}
+
+// 'definitief' = bevestigd + uitbetaald samen
+function statusMatch(b){
+  if(huidigStatus === 'alle') return true;
+  if(huidigStatus === 'definitief') return b.status === 'bevestigd' || b.status === 'uitbetaald';
+  return b.status === huidigStatus;
+}
+
+// Link naar de bronkaart in de Leadpool-app (bezichtiging eerst, anders de pool-lead)
+function bronLink(b){
+  if(b.bezichtiging_id)  return LEADPOOL + '/?bez='  + encodeURIComponent(b.bezichtiging_id);
+  if(b.bellijst_item_id) return LEADPOOL + '/?lead=' + encodeURIComponent(b.bellijst_item_id);
+  return null;
+}
+
 function actiesHtml(b){
   const id = b.id;
   if(b.status === 'concept'){
@@ -231,22 +271,31 @@ function actiesHtml(b){
 }
 
 function render(){
-  const zichtbaar = beloningen.filter(b => huidigType==='alle' || (b.type||'lead_175')===huidigType);
+  // Totalen volgen het TYPE-filter (alle statussen); de lijst volgt type + status.
+  const typeSet = beloningen.filter(b => huidigType==='alle' || (b.type||'lead_175')===huidigType);
+  const zichtbaar = typeSet.filter(statusMatch);
+
   const telling = {concept:0, bevestigd:0, uitbetaald:0, vervallen:0};
   let openBedrag = 0, uitbetaaldBedrag = 0;
+  for(const b of typeSet){
+    telling[b.status] = (telling[b.status]||0) + 1;
+    if(b.status==='concept' || b.status==='bevestigd') openBedrag += Number(b.bedrag||0);
+    if(b.status==='uitbetaald') uitbetaaldBedrag += Number(b.bedrag||0);
+  }
+
   let html = '';
   for(const b of zichtbaar){
     const c = conf[b.status] || conf.concept;
     const tc = typeConf[b.type] || typeConf.lead_175;
-    telling[b.status] = (telling[b.status]||0) + 1;
-    if(b.status==='concept' || b.status==='bevestigd') openBedrag += Number(b.bedrag||0);
-    if(b.status==='uitbetaald') uitbetaaldBedrag += Number(b.bedrag||0);
+    const naam = esc(b.klant_naam||'');
+    const href = bronLink(b);
+    const klantHtml = href ? `<a class="lead-link" href="${href}" target="_blank" rel="noopener" title="Naar de bronkaart in de Leadpool">${naam}</a>` : naam;
     html += `
     <div class="bel" style="border-left-color:${c.bar}">
       <div class="bel-top">
         <div style="min-width:0">
           <div class="bel-makelaar">${esc(b.gevende_makelaar||'Onbekende makelaar')}</div>
-          <div class="bel-klant">Lead: ${esc(b.klant_naam||'')}${b.adres ? ' &middot; '+esc(b.adres) : ''}</div>
+          <div class="bel-klant">Lead: ${klantHtml}${b.adres ? ' &middot; '+esc(b.adres) : ''}</div>
           <div class="bel-meta"><span class="type-chip ${tc.klasse}">${tc.label}</span>${b.factuurnummer ? esc(b.factuurnummer)+' &middot; ' : ''}aangemaakt ${datumNL(b.aangemaakt_op)}</div>
         </div>
         <div class="bel-rechts">
@@ -266,7 +315,7 @@ function render(){
 
   document.getElementById('totalen').innerHTML = `
     <div class="tot accent">
-      <div class="tot-label">Openstaand</div>
+      <div class="tot-label">Tegoed</div>
       <div class="tot-getal">${euro(openBedrag)}</div>
       <div class="tot-klein">concept + bevestigd</div>
     </div>
@@ -280,6 +329,14 @@ function render(){
       <div class="tot-getal uitbetaald">${euro(uitbetaaldBedrag)}</div>
       <div class="tot-klein">${telling.uitbetaald} ${telling.uitbetaald===1?'beloning':'beloningen'}</div>
     </div>`;
+
+  const onder = document.getElementById('totaal-onder');
+  if(beloningen.length){
+    onder.style.display = 'flex';
+    onder.innerHTML = `<span>Totaal tegoed${huidigType!=='alle' ? ' &middot; '+(typeConf[huidigType]?typeConf[huidigType].label:'') : ''}</span><strong>${euro(openBedrag)}</strong>`;
+  } else {
+    onder.style.display = 'none';
+  }
 }
 
 async function zet(id, status){
