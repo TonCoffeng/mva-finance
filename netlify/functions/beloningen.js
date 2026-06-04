@@ -8,6 +8,11 @@
 //     → bezichtiging_id → bezichtigingen.gevende_makelaar_id
 //       → gebruikers.naam  = de makelaar die €175 krijgt
 //
+// Hypotheek-beloning (€650):
+//   hypotheek_doorverwijzingen (gevende_makelaar_id) → gebruikers.naam = makelaar die €650 krijgt
+//   Trigger = de doorverwijzing zelf (lead doorgegeven aan de Hypotheekshop).
+//   Ontdubbeld op beloningen.hypotheek_doorverwijzing_id.
+//
 // Eén endpoint, action-gebaseerd (zoals wwft.js / kosten.js):
 //   { action: 'scan' }                         → maak concept-beloningen voor nieuwe pool-deals, geef daarna de lijst
 //   { action: 'lijst' }                        → alle beloningen
@@ -73,8 +78,9 @@ async function scanNieuweDeals() {
   );
   if (!leads.length) return 0;
 
-  // 2. Welke bellijst_item_ids hebben al een beloning? (niet dubbel aanmaken)
-  const bestaand = await sb.get('beloningen?select=bellijst_item_id');
+  // 2. Welke bellijst_item_ids hebben al een €175-beloning? (niet dubbel aanmaken)
+  //    Type-scoped: een hypotheek-beloning op hetzelfde bellijst_item mag een €175 niet blokkeren.
+  const bestaand = await sb.get('beloningen?select=bellijst_item_id&type=eq.lead_175');
   const alGehad = new Set(bestaand.map(b => b.bellijst_item_id));
 
   const teVerwerken = leads.filter(l => !alGehad.has(l.id));
@@ -121,6 +127,58 @@ async function scanNieuweDeals() {
   return nieuwe.length;
 }
 
+// Maak concept-beloningen (€650) voor hypotheek-doorverwijzingen die nog geen beloning hebben.
+// Trigger = de doorverwijzing zelf (lead doorgegeven aan de Hypotheekshop). Status-voortgang
+// (concept → bevestigd → uitbetaald) gebeurt daarna handmatig in de app.
+async function scanHypotheekDoorverwijzingen() {
+  // 1. Doorverwijzingen mét gevende makelaar
+  const verwijzingen = await sb.get(
+    'hypotheek_doorverwijzingen?select=id,klant_naam,klant_email,type_advies,gevende_makelaar_id,gevende_makelaar_naam,bellijst_item_id,bezichtiging_id' +
+    '&gevende_makelaar_id=not.is.null'
+  );
+  if (!verwijzingen.length) return 0;
+
+  // 2. Welke doorverwijzingen hebben al een €650-beloning? (niet dubbel aanmaken)
+  const bestaand = await sb.get('beloningen?select=hypotheek_doorverwijzing_id&type=eq.hypotheek_650');
+  const alGehad = new Set(bestaand.map(b => b.hypotheek_doorverwijzing_id).filter(Boolean));
+
+  const teVerwerken = verwijzingen.filter(v => !alGehad.has(v.id));
+  if (!teVerwerken.length) return 0;
+
+  // 3. Makelaarsnamen ophalen (autoritatief uit gebruikers, fallback op opgeslagen naam)
+  const makelaarIds = [...new Set(teVerwerken.map(v => v.gevende_makelaar_id).filter(Boolean))];
+  let naamMap = new Map();
+  if (makelaarIds.length) {
+    const gebruikers = await sb.get(`gebruikers?select=id,naam&id=in.(${makelaarIds.join(',')})`);
+    naamMap = new Map(gebruikers.map(g => [g.id, g.naam]));
+  }
+
+  // 4. Concept-beloningen samenstellen
+  const nieuwe = [];
+  for (const v of teVerwerken) {
+    const naam = naamMap.get(v.gevende_makelaar_id) || v.gevende_makelaar_naam;
+    if (!v.gevende_makelaar_id || !naam) continue; // geen gevende makelaar bekend → overslaan
+    nieuwe.push({
+      type: 'hypotheek_650',
+      bedrag: 650.00,
+      gevende_makelaar_id: v.gevende_makelaar_id,
+      gevende_makelaar: naam,
+      hypotheek_doorverwijzing_id: v.id,
+      bellijst_item_id: v.bellijst_item_id || null,
+      bezichtiging_id: v.bezichtiging_id || null,
+      klant_naam: v.klant_naam,
+      klant_email: v.klant_email,
+      opmerking: v.type_advies ? ('Hypotheekadvies: ' + v.type_advies) : null,
+      status: 'concept',
+    });
+  }
+
+  if (nieuwe.length) {
+    await sb.post('beloningen', nieuwe);
+  }
+  return nieuwe.length;
+}
+
 async function haalLijst() {
   return sb.get('beloningen?select=*&order=aangemaakt_op.desc');
 }
@@ -141,9 +199,10 @@ exports.handler = async (event) => {
 
   try {
     if (action === 'scan') {
-      const aantalNieuw = await scanNieuweDeals();
+      const nieuwLead      = await scanNieuweDeals();
+      const nieuwHypotheek = await scanHypotheekDoorverwijzingen();
       const beloningen = await haalLijst();
-      return { statusCode: 200, headers, body: JSON.stringify({ ok: true, nieuw: aantalNieuw, beloningen }) };
+      return { statusCode: 200, headers, body: JSON.stringify({ ok: true, nieuw: nieuwLead + nieuwHypotheek, nieuw_lead: nieuwLead, nieuw_hypotheek: nieuwHypotheek, beloningen }) };
     }
 
     if (action === 'lijst') {
