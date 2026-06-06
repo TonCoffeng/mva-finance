@@ -92,10 +92,7 @@
 <div class="login-overlay" id="login">
   <div class="login-kaart">
     <div class="titel">MvA Finance</div>
-    <div class="sub">WWFT-controle · log in om verder te gaan</div>
-    <div class="login-fout" id="login-fout"></div>
-    <input type="password" id="ww" placeholder="Wachtwoord" autocomplete="current-password">
-    <button onclick="login()">Inloggen</button>
+    <div class="sub" id="login-sub">Inloggen&hellip;</div>
   </div>
 </div>
 
@@ -105,7 +102,7 @@
       <div class="titel-h">WWFT-controle</div>
       <div class="sub">Actuele courtagenota's · controleer ID/WWFT van eigen klant en wederpartij</div>
     </div>
-    <a class="terug" href="https://mva-intelligence.netlify.app/">← Terug naar portal</a>
+    <a class="terug" href="https://portal.makelaarsvan.nl/">← Terug naar portal</a>
   </header>
 
   <div class="totalen" id="totalen"></div>
@@ -130,7 +127,9 @@
 
 <script>
 const API = '/.netlify/functions/wwft';
-const WACHTWOORD = 'MVA2026!';
+const SB_URL = 'https://olfcrzusdkijxroxvsgm.supabase.co';
+const SB_KEY = 'sb_publishable_0OmJOAM_XZWCW8e_vgx2Qg_L3tdRsc4';
+let sbToken = null;
 let zaken = [];
 let filter = 'alle';
 
@@ -149,24 +148,18 @@ function toast(msg, fout){
   setTimeout(()=>{ t.className = 'toast'; }, 2600);
 }
 
-function login(){
-  const v = document.getElementById('ww').value;
-  if(v === WACHTWOORD){
-    sessionStorage.setItem('wwft_auth','1');
-    toonApp();
-  } else {
-    document.getElementById('login-fout').textContent = 'Onjuist wachtwoord';
-  }
-}
-function toonApp(){
+function startApp(){
   document.getElementById('login').style.display = 'none';
   document.getElementById('app').style.display = 'block';
   laad();
 }
-document.getElementById('ww').addEventListener('keydown', e=>{ if(e.key==='Enter') login(); });
+function setLoginSub(html){
+  const el = document.getElementById('login-sub');
+  if(el) el.innerHTML = html;
+}
 
 async function api(body){
-  const r = await fetch(API, {method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify(body)});
+  const r = await fetch(API, {method:'POST', headers:{'Content-Type':'application/json','Authorization':'Bearer '+(sbToken||'')}, body:JSON.stringify(body)});
   const j = await r.json();
   if(!r.ok || j.error) throw new Error(j.error || ('HTTP '+r.status));
   return j;
@@ -302,8 +295,37 @@ async function zetStatus(factuurnummer, veld, waarde){
   }
 }
 
-if(sessionStorage.getItem('wwft_auth')==='1'){ toonApp(); }
-else { document.getElementById('ww').focus(); }
+(async function(){
+  if(!location.hostname.endsWith('makelaarsvan.nl')){
+    setLoginSub('Open deze app via <a href="https://finance.makelaarsvan.nl/" style="color:var(--navy)">finance.makelaarsvan.nl</a> om in te loggen.');
+    return;
+  }
+  try{
+    const { createBrowserClient } = await import('https://esm.sh/@supabase/ssr@0.5.2');
+    const sb = createBrowserClient(SB_URL, SB_KEY, { cookieOptions:{ domain:'.makelaarsvan.nl', path:'/', sameSite:'lax', secure:true, maxAge:60*60*24*30 } });
+    const { data:{ session } } = await sb.auth.getSession();
+    if(!session || !session.user){
+      if(sessionStorage.getItem('mva_sso_redirect')!=='1'){
+        sessionStorage.setItem('mva_sso_redirect','1');
+        location.href = 'https://portal.makelaarsvan.nl/';
+      } else {
+        setLoginSub('Niet ingelogd. <a href="https://portal.makelaarsvan.nl/" style="color:var(--navy)">Log in via de portal</a>.');
+      }
+      return;
+    }
+    sessionStorage.removeItem('mva_sso_redirect');
+    sbToken = session.access_token;
+    const { data: rij } = await sb.from('gebruikers').select('naam, rol').eq('auth_uuid', session.user.id).maybeSingle();
+    const rol = rij ? rij.rol : null;
+    if(rol === 'directie' || rol === 'compliance'){
+      startApp();
+    } else {
+      setLoginSub('Geen toegang — de WWFT-module is alleen voor directie en compliance. <a href="https://portal.makelaarsvan.nl/" style="color:var(--navy)">Naar de portal</a>.');
+    }
+  }catch(e){
+    setLoginSub('Kon de inlogservice niet laden. Ververs de pagina.');
+  }
+})();
 </script>
 </body>
 </html>
