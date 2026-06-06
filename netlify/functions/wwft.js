@@ -64,6 +64,10 @@ async function verifieerGebruiker(token) {
 const TOEGESTANE_VELDEN  = ['eigen_klant_status', 'wederpartij_status'];
 const TOEGESTANE_WAARDEN = ['open', 'ja', 'nee', 'weigert'];
 
+// Fase 2 — pilot: gebruiker-ids die hun EIGEN WWFT-zaken ALLEEN-LEZEN mogen inzien.
+// Uitbreiden naar meer makelaars = id toevoegen aan deze lijst. (Rogier de Vries = 7)
+const WWFT_EIGEN_DOSSIERS_PILOT = [7];
+
 // Welke kolommen de WWFT-pagina nodig heeft (geen ruwe_mail e.d.)
 const SELECT_VELDEN =
   'factuurnummer,datum,transportdatum,type,relatie,adres,betreft,afdeling,' +
@@ -83,10 +87,13 @@ exports.handler = async (event) => {
   if (!token) return { statusCode: 401, headers, body: JSON.stringify({ error: 'Niet ingelogd' }) };
   const gebruiker = await verifieerGebruiker(token);
   if (!gebruiker) return { statusCode: 401, headers, body: JSON.stringify({ error: 'Sessie ongeldig of verlopen' }) };
-  if (gebruiker.rol !== 'directie' && gebruiker.rol !== 'compliance') {
+  const volledigeToegang = gebruiker.rol === 'directie' || gebruiker.rol === 'compliance';
+  const eigenDossiers    = WWFT_EIGEN_DOSSIERS_PILOT.map(Number).includes(Number(gebruiker.id));
+  if (!volledigeToegang && !eigenDossiers) {
     return { statusCode: 403, headers, body: JSON.stringify({ error: 'Geen toegang tot de WWFT-module' }) };
   }
-  // (Fase 2: rol 'makelaar' → eigen zaken alleen-lezen via makelaar_id)
+  // volledigeToegang → alle zaken + bewerken (directie, compliance)
+  // eigenDossiers    → alleen eigen zaken (makelaar_id), alleen-lezen (pilot-makelaars)
 
   let payload;
   try { payload = JSON.parse(event.body || '{}'); }
@@ -97,15 +104,22 @@ exports.handler = async (event) => {
   try {
     if (action === 'lijst') {
       // Alleen actuele WWFT-zaken: courtagenota's die op de werklijst staan.
-      const path =
+      // Pilot-makelaars (geen volledige toegang) zien uitsluitend hun eigen zaken.
+      let path =
         `facturen?select=${SELECT_VELDEN}` +
-        `&wwft_actueel=eq.true` +
-        `&order=datum.desc.nullslast,factuurnummer.desc`;
+        `&wwft_actueel=eq.true`;
+      if (!volledigeToegang) {
+        path += `&makelaar_id=eq.${gebruiker.id}`;
+      }
+      path += `&order=datum.desc.nullslast,factuurnummer.desc`;
       const rows = await sb.get(path);
-      return { statusCode: 200, headers, body: JSON.stringify({ ok: true, zaken: rows }) };
+      return { statusCode: 200, headers, body: JSON.stringify({ ok: true, zaken: rows, readonly: !volledigeToegang }) };
     }
 
     if (action === 'status') {
+      if (!volledigeToegang) {
+        return { statusCode: 403, headers, body: JSON.stringify({ error: 'Alleen-lezen: alleen directie en compliance kunnen de WWFT-status wijzigen' }) };
+      }
       const { factuurnummer, veld, waarde } = payload;
       if (!factuurnummer) return { statusCode: 400, headers, body: JSON.stringify({ error: 'factuurnummer vereist' }) };
       if (!TOEGESTANE_VELDEN.includes(veld))  return { statusCode: 400, headers, body: JSON.stringify({ error: `Ongeldig veld: ${veld}` }) };
