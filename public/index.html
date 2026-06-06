@@ -74,6 +74,7 @@
   .status-label{font-size:11px;text-transform:uppercase;letter-spacing:.04em;color:var(--grijs);margin-bottom:4px}
   select{font-family:inherit;font-size:14px;border:1.5px solid var(--rand);border-radius:7px;padding:7px 9px;outline:none;width:100%;background:#fff;color:var(--tekst)}
   select:focus{border-color:var(--navy)}
+  .status-waarde{font-size:14px;font-weight:600;color:var(--tekst);padding:7px 9px;border:1.5px solid var(--rand);border-radius:7px;background:#FAF9F6}
 
   .leeg,.laden{text-align:center;padding:40px;color:var(--grijs);font-size:14px;background:var(--wit);border:1px solid var(--rand);border-radius:12px}
   .toast{position:fixed;bottom:24px;left:50%;transform:translateX(-50%);background:var(--navy);color:#fff;padding:11px 20px;border-radius:10px;font-size:14px;box-shadow:0 8px 24px rgba(0,0,0,.18);opacity:0;transition:opacity .25s,transform .25s;pointer-events:none;z-index:50}
@@ -100,10 +101,14 @@
   <header>
     <div>
       <div class="titel-h">WWFT-controle</div>
-      <div class="sub">Actuele courtagenota's · controleer ID/WWFT van eigen klant en wederpartij</div>
+      <div class="sub" id="hdr-sub">Actuele courtagenota's · controleer ID/WWFT van eigen klant en wederpartij</div>
     </div>
     <a class="terug" href="https://portal.makelaarsvan.nl/">← Terug naar portal</a>
   </header>
+
+  <div id="readonly-banner" style="display:none;background:var(--c-oranje-bg);color:var(--c-oranje-tx);border:1px solid var(--c-oranje);border-radius:10px;padding:10px 14px;font-size:13px;margin-bottom:16px">
+    <b>Alleen-lezen.</b> Je ziet hier je eigen WWFT-dossiers. De ID/WWFT-controle zelf wordt door directie en compliance bijgehouden.
+  </div>
 
   <div class="totalen" id="totalen"></div>
 
@@ -131,6 +136,7 @@ const SB_URL = 'https://olfcrzusdkijxroxvsgm.supabase.co';
 const SB_KEY = 'sb_publishable_0OmJOAM_XZWCW8e_vgx2Qg_L3tdRsc4';
 let sbToken = null;
 let zaken = [];
+let readOnly = false;
 let filter = 'alle';
 
 function esc(s){ return String(s==null?'':s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])); }
@@ -151,7 +157,6 @@ function toast(msg, fout){
 function startApp(){
   document.getElementById('login').style.display = 'none';
   document.getElementById('app').style.display = 'block';
-  laad();
 }
 function setLoginSub(html){
   const el = document.getElementById('login-sub');
@@ -169,10 +174,16 @@ async function laad(){
   try{
     const j = await api({action:'lijst'});
     zaken = j.zaken || [];
+    readOnly = !!j.readonly;
+    if(readOnly){
+      document.getElementById('readonly-banner').style.display = 'block';
+      const hs = document.getElementById('hdr-sub');
+      if(hs) hs.textContent = "Je eigen courtagenota's · WWFT-status (alleen-lezen)";
+    }
+    startApp();
     render();
   }catch(e){
-    document.getElementById('lijst').innerHTML =
-      '<div class="leeg">Kon zaken niet laden: '+esc(e.message)+'</div>';
+    setLoginSub(esc(e.message) + ' <a href="https://portal.makelaarsvan.nl/" style="color:var(--navy)">Naar de portal</a>.');
   }
 }
 
@@ -195,6 +206,15 @@ function selectHtml(z, veld){
   const cur = z[veld] || 'open';
   const opts = OPTS.map(o=>`<option value="${o[0]}"${o[0]===cur?' selected':''}>${o[1]}</option>`).join('');
   return `<select onchange="zetStatus('${esc(z.factuurnummer)}','${veld}',this.value)">${opts}</select>`;
+}
+
+function statusVeldHtml(z, veld){
+  if(readOnly){
+    const cur = z[veld] || 'open';
+    const o = OPTS.find(x=>x[0]===cur);
+    return `<div class="status-waarde">${esc(o ? o[1] : '—')}</div>`;
+  }
+  return selectHtml(z, veld);
 }
 
 function typeLabel(z){
@@ -249,11 +269,11 @@ function render(){
       <div class="statussen">
         <div>
           <div class="status-label">Eigen klant WWFT</div>
-          ${selectHtml(z,'eigen_klant_status')}
+          ${statusVeldHtml(z,'eigen_klant_status')}
         </div>
         <div>
           <div class="status-label">Wederpartij WWFT</div>
-          ${selectHtml(z,'wederpartij_status')}
+          ${statusVeldHtml(z,'wederpartij_status')}
         </div>
       </div>
     </div>`;
@@ -315,13 +335,11 @@ async function zetStatus(factuurnummer, veld, waarde){
     }
     sessionStorage.removeItem('mva_sso_redirect');
     sbToken = session.access_token;
-    const { data: rij } = await sb.from('gebruikers').select('naam, rol').eq('auth_uuid', session.user.id).maybeSingle();
-    const rol = rij ? rij.rol : null;
-    if(rol === 'directie' || rol === 'compliance'){
-      startApp();
-    } else {
-      setLoginSub('Geen toegang — de WWFT-module is alleen voor directie en compliance. <a href="https://portal.makelaarsvan.nl/" style="color:var(--navy)">Naar de portal</a>.');
-    }
+    // De server bepaalt wat deze gebruiker mag zien:
+    //   directie/compliance → alle zaken + bewerken
+    //   pilot-makelaar       → eigen zaken, alleen-lezen
+    //   anders               → 403, geen toegang
+    laad();
   }catch(e){
     setLoginSub('Kon de inlogservice niet laden. Ververs de pagina.');
   }
