@@ -20,7 +20,7 @@ const SUPABASE_SERVICE_KEY = process.env.SUPABASE_SERVICE_KEY;
 
 const headers = {
   'Access-Control-Allow-Origin': '*',
-  'Access-Control-Allow-Headers': 'Content-Type',
+  'Access-Control-Allow-Headers': 'Content-Type, Authorization',
   'Access-Control-Allow-Methods': 'POST, OPTIONS',
   'Content-Type': 'application/json',
 };
@@ -47,6 +47,20 @@ const sb = {
   },
 };
 
+// Verifieer het Supabase-token van de aanroeper en haal de rol op uit gebruikers.
+async function verifieerGebruiker(token) {
+  const r = await fetch(`${SUPABASE_URL}/auth/v1/user`, {
+    headers: { apikey: SUPABASE_SERVICE_KEY, Authorization: `Bearer ${token}` },
+  });
+  if (!r.ok) return null;
+  const user = await r.json();
+  if (!user || !user.id) return null;
+  const rows = await sb.get(`gebruikers?select=id,rol,actief&auth_uuid=eq.${user.id}&limit=1`);
+  const g = rows && rows[0];
+  if (!g || g.actief === false) return null;
+  return g;
+}
+
 const TOEGESTANE_VELDEN  = ['eigen_klant_status', 'wederpartij_status'];
 const TOEGESTANE_WAARDEN = ['open', 'ja', 'nee', 'weigert'];
 
@@ -62,6 +76,17 @@ exports.handler = async (event) => {
   if (!SUPABASE_URL || !SUPABASE_SERVICE_KEY) {
     return { statusCode: 500, headers, body: JSON.stringify({ error: 'Supabase-config ontbreekt (env vars)' }) };
   }
+
+  // ── Toegang: token verifiëren + rol bepalen (server-side, niet te omzeilen) ──
+  const authHeader = event.headers.authorization || event.headers.Authorization || '';
+  const token = authHeader.startsWith('Bearer ') ? authHeader.slice(7) : null;
+  if (!token) return { statusCode: 401, headers, body: JSON.stringify({ error: 'Niet ingelogd' }) };
+  const gebruiker = await verifieerGebruiker(token);
+  if (!gebruiker) return { statusCode: 401, headers, body: JSON.stringify({ error: 'Sessie ongeldig of verlopen' }) };
+  if (gebruiker.rol !== 'directie' && gebruiker.rol !== 'compliance') {
+    return { statusCode: 403, headers, body: JSON.stringify({ error: 'Geen toegang tot de WWFT-module' }) };
+  }
+  // (Fase 2: rol 'makelaar' → eigen zaken alleen-lezen via makelaar_id)
 
   let payload;
   try { payload = JSON.parse(event.body || '{}'); }
