@@ -253,7 +253,6 @@ function setFilter(f){ filter = (filter===f) ? 'alle' : f; render(); }
 function setMakelaar(v){ makelaarFilter = v; render(); }
 
 function render(){
-  // Eerst de makelaar-selectie toepassen; kleurtellingen en lijst werken op die subset.
   const naMakelaar = zaken.filter(z => {
     const zid = z.makelaar_id==null ? '' : String(z.makelaar_id);
     return makelaarFilter==='alle' || zid===String(makelaarFilter);
@@ -275,7 +274,6 @@ function render(){
     return `<button class="${act.trim()}" onclick="setFilter('${b[0]}')">${dot}${b[1]}<span class="telw">${telling[b[0]]}</span></button>`;
   }).join('');
 
-  // Makelaar-dropdown (alleen voor wie alle zaken ziet) — telling per makelaar over álle zaken.
   const mbar = document.getElementById('makelaarbar');
   if(!readOnly){
     const perMak = new Map();
