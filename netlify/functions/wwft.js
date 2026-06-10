@@ -71,7 +71,7 @@ const WWFT_EIGEN_DOSSIERS_PILOT = [7];
 // Welke kolommen de WWFT-pagina nodig heeft (geen ruwe_mail e.d.)
 const SELECT_VELDEN =
   'factuurnummer,datum,transportdatum,type,relatie,adres,betreft,afdeling,' +
-  'bedrag_incl,eigen_klant_status,wederpartij_status,wwft_actueel,is_courtagenota';
+  'bedrag_incl,eigen_klant_status,wederpartij_status,wwft_notitie,wwft_actueel,is_courtagenota';
 
 exports.handler = async (event) => {
   if (event.httpMethod === 'OPTIONS') return { statusCode: 200, headers, body: '' };
@@ -126,6 +126,22 @@ exports.handler = async (event) => {
       if (!TOEGESTANE_WAARDEN.includes(waarde)) return { statusCode: 400, headers, body: JSON.stringify({ error: `Ongeldige waarde: ${waarde}` }) };
 
       const data = { [veld]: waarde, bijgewerkt_op: new Date().toISOString() };
+      const resultaat = await sb.patch(
+        `facturen?factuurnummer=eq.${encodeURIComponent(factuurnummer)}&wwft_actueel=eq.true`,
+        data
+      );
+      return { statusCode: 200, headers, body: JSON.stringify({ ok: true, zaak: resultaat[0] }) };
+    }
+
+    if (action === 'notitie') {
+      if (!volledigeToegang) {
+        return { statusCode: 403, headers, body: JSON.stringify({ error: 'Alleen-lezen: alleen directie en compliance kunnen de WWFT-notitie wijzigen' }) };
+      }
+      const { factuurnummer } = payload;
+      if (!factuurnummer) return { statusCode: 400, headers, body: JSON.stringify({ error: 'factuurnummer vereist' }) };
+      const notitie = (payload.waarde == null ? '' : String(payload.waarde)).slice(0, 2000);
+
+      const data = { wwft_notitie: notitie, bijgewerkt_op: new Date().toISOString() };
       const resultaat = await sb.patch(
         `facturen?factuurnummer=eq.${encodeURIComponent(factuurnummer)}&wwft_actueel=eq.true`,
         data
