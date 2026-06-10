@@ -71,7 +71,7 @@ const WWFT_EIGEN_DOSSIERS_PILOT = [7];
 // Welke kolommen de WWFT-pagina nodig heeft (geen ruwe_mail e.d.)
 const SELECT_VELDEN =
   'factuurnummer,datum,transportdatum,type,relatie,adres,betreft,afdeling,' +
-  'bedrag_incl,eigen_klant_status,wederpartij_status,wwft_notitie,wwft_actueel,is_courtagenota';
+  'bedrag_incl,eigen_klant_status,wederpartij_status,wwft_notitie,wwft_actueel,is_courtagenota,makelaar_id';
 
 exports.handler = async (event) => {
   if (event.httpMethod === 'OPTIONS') return { statusCode: 200, headers, body: '' };
@@ -113,6 +113,16 @@ exports.handler = async (event) => {
       }
       path += `&order=datum.desc.nullslast,factuurnummer.desc`;
       const rows = await sb.get(path);
+
+      // Makelaar-naam per zaak erbij (voor weergave + filter). Geen FK nodig: losse lookup.
+      const ids = [...new Set(rows.map(r => r.makelaar_id).filter(Boolean))];
+      if (ids.length) {
+        const gs = await sb.get(`gebruikers?select=id,naam&id=in.(${ids.join(',')})`);
+        const naamVan = {};
+        for (const g of gs) naamVan[g.id] = g.naam;
+        for (const r of rows) r.makelaar_naam = naamVan[r.makelaar_id] || null;
+      }
+
       return { statusCode: 200, headers, body: JSON.stringify({ ok: true, zaken: rows, readonly: !volledigeToegang }) };
     }
 
