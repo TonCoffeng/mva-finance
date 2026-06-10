@@ -58,6 +58,11 @@
   .filterbar .telw{font-size:11px;font-weight:700;background:rgba(26,43,95,.08);color:inherit;padding:1px 7px;border-radius:10px;min-width:20px;text-align:center}
   .filterbar button.actief .telw{background:rgba(255,255,255,.22)}
 
+  .makelaarbar{display:flex;align-items:center;gap:8px;margin:-6px 0 18px;flex-wrap:wrap}
+  .makelaarbar label{font-size:12px;text-transform:uppercase;letter-spacing:.05em;color:var(--grijs)}
+  .makelaarbar select{font-family:inherit;font-size:13px;font-weight:600;border:1.5px solid var(--rand);background:var(--wit);color:var(--navy);border-radius:8px;padding:7px 11px;width:auto;cursor:pointer}
+  .makelaarbar select:focus{border-color:var(--navy)}
+
   .lijst{display:flex;flex-direction:column;gap:10px}
   .zaak{background:var(--wit);border:1px solid var(--rand);border-left:4px solid var(--c-blanco);border-radius:10px;padding:13px 15px}
   .zaak-top{display:flex;justify-content:space-between;align-items:flex-start;gap:10px;flex-wrap:wrap}
@@ -127,6 +132,8 @@
 
   <div class="filterbar" id="filterbar"></div>
 
+  <div class="makelaarbar" id="makelaarbar" style="display:none"></div>
+
   <div class="lijst" id="lijst">
     <div class="laden">Laden…</div>
   </div>
@@ -144,6 +151,7 @@ let sbToken = null;
 let zaken = [];
 let readOnly = false;
 let filter = 'alle';
+let makelaarFilter = 'alle';
 
 function esc(s){ return String(s==null?'':s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])); }
 function euro(n){ return n==null ? '—' : '€ ' + Number(n).toLocaleString('nl-NL',{minimumFractionDigits:2,maximumFractionDigits:2}); }
@@ -242,11 +250,17 @@ function typeLabel(z){
 }
 
 function setFilter(f){ filter = (filter===f) ? 'alle' : f; render(); }
+function setMakelaar(v){ makelaarFilter = v; render(); }
 
 function render(){
+  const naMakelaar = zaken.filter(z => {
+    const zid = z.makelaar_id==null ? '' : String(z.makelaar_id);
+    return makelaarFilter==='alle' || zid===String(makelaarFilter);
+  });
+
   let groen=0, aandacht=0;
-  const telling = {alle:zaken.length, groen:0, oranje:0, rood:0, blanco:0};
-  for(const z of zaken){ telling[kleur(z)]++; }
+  const telling = {alle:naMakelaar.length, groen:0, oranje:0, rood:0, blanco:0};
+  for(const z of naMakelaar){ telling[kleur(z)]++; }
   const fknoppen = [
     ['alle','Alle',null],
     ['groen','Courtage vrij','var(--c-groen)'],
@@ -260,9 +274,27 @@ function render(){
     return `<button class="${act.trim()}" onclick="setFilter('${b[0]}')">${dot}${b[1]}<span class="telw">${telling[b[0]]}</span></button>`;
   }).join('');
 
+  const mbar = document.getElementById('makelaarbar');
+  if(!readOnly){
+    const perMak = new Map();
+    for(const z of zaken){
+      const id = z.makelaar_id==null ? '' : String(z.makelaar_id);
+      const naam = z.makelaar_naam || 'Onbekend';
+      if(!perMak.has(id)) perMak.set(id, {naam, n:0});
+      perMak.get(id).n++;
+    }
+    const opties = [...perMak.entries()].sort((a,b)=>a[1].naam.localeCompare(b[1].naam,'nl'));
+    let sel = `<option value="alle"${makelaarFilter==='alle'?' selected':''}>Alle makelaars (${zaken.length})</option>`;
+    sel += opties.map(([id,o])=>`<option value="${esc(id)}"${String(makelaarFilter)===id?' selected':''}>${esc(o.naam)} (${o.n})</option>`).join('');
+    mbar.innerHTML = `<label for="makelaarSelect">Makelaar</label><select id="makelaarSelect" onchange="setMakelaar(this.value)">${sel}</select>`;
+    mbar.style.display = 'flex';
+  } else {
+    mbar.style.display = 'none';
+  }
+
   let html = '';
   let zichtbaar = 0;
-  for(const z of zaken){
+  for(const z of naMakelaar){
     const k = kleur(z); const c = conf[k];
     if(k==='groen') groen++;
     if(k==='rood'||k==='oranje') aandacht++;
@@ -274,7 +306,7 @@ function render(){
         <div style="min-width:0">
           <div class="zaak-naam">${esc(z.relatie)}</div>
           <div class="zaak-adres"><span class="pin">📍</span>${esc(z.adres || z.betreft || '—')}</div>
-          <div class="zaak-meta">${esc(z.factuurnummer)} · ${esc(z.afdeling||'')} · ${esc(typeLabel(z))}</div>
+          <div class="zaak-meta">${esc(z.factuurnummer)} · ${esc(z.afdeling||'')} · ${esc(typeLabel(z))}${z.makelaar_naam ? ' · 👤 '+esc(z.makelaar_naam) : ''}</div>
         </div>
         <div class="zaak-rechts">
           <span class="chip" style="background:${c.bg};color:${c.tx}">${c.label}</span>
@@ -305,7 +337,7 @@ function render(){
   document.getElementById('totalen').innerHTML = `
     <div class="tot accent">
       <div class="tot-label">Actuele zaken</div>
-      <div class="tot-getal">${zaken.length}</div>
+      <div class="tot-getal">${naMakelaar.length}</div>
       <div class="tot-klein">courtagenota's in behandeling</div>
     </div>
     <div class="tot">
