@@ -441,34 +441,42 @@ function renderOtd(){
   if(tel) tel.textContent = otdZaken.length + ' zaak' + (otdZaken.length !== 1 ? 'en' : '');
   let html = '';
   for(const z of otdZaken){
-    const namen = (z.opdrachtgevers||[]).map(o=>o.naam).filter(Boolean).join(', ') || '—';
+    const namen = (z.opdrachtgevers||[]).map(o=>o.naam).filter(Boolean).join(', ') || (z.object_adres ? '' : '—');
     const type = z.documenttype === 'aankoop' ? 'Aankoop' : z.documenttype === 'verkoop' ? 'Verkoop' : (z.documenttype||'');
     const datum = z.ondertekend_op ? datumNL(z.ondertekend_op) : '—';
-    const ekOk  = z.eigen_klant_ok  === true;
-    const wpOk  = z.wederpartij_ok  === true;
-    const otdOk = z.otd_aanwezig    === true || z.bron === 'otd'; // vanuit OTD-webhook = altijd getekend
+    const ekOk  = z.eigen_klant_ok === true;
+    const wpOk  = z.wederpartij_ok === true;
+    const otdAutomatisch = z.bron === 'otd';
+    const otdOk = otdAutomatisch || z.otd_aanwezig === true;
+    const otdOpen = z.otd_aanwezig === null || z.otd_aanwezig === undefined;
+    const ontbreekt = z.otd_ontbreekt === true;
     const roLabel = readOnly ? ' readonly' : '';
+    const borderl = ontbreekt ? 'var(--c-rood)' : (otdOk && ekOk && wpOk ? 'var(--c-groen)' : 'var(--c-blanco)');
+    const chipBg = ontbreekt ? 'var(--c-rood-bg)' : (otdOk && ekOk && wpOk ? 'var(--c-groen-bg)' : 'var(--c-blanco-bg)');
+    const chipTx = ontbreekt ? 'var(--c-rood-tx)' : (otdOk && ekOk && wpOk ? 'var(--c-groen-tx)' : 'var(--c-blanco-tx)');
+    const chipLabel = ontbreekt ? '⚠ OTD ontbreekt' : (otdOk && ekOk && wpOk ? 'Volledig compleet' : 'In behandeling');
+    // OTD-vinkje: automatisch groen als bron=otd, klikbaar als bron=factuur, rood als ontbreekt
+    const otdVinkjeHtml = otdAutomatisch
+      ? `<div class="vinkje-wrap aan readonly" title="OTD getekend via het platform"><div class="vinkje-box">✓</div><span class="vinkje-label">Ja (automatisch)</span></div>`
+      : ontbreekt
+        ? `<div class="vinkje-wrap readonly" style="border-color:var(--c-rood);background:var(--c-rood-bg)"><div class="vinkje-box" style="border-color:var(--c-rood)"></div><span class="vinkje-label" style="color:var(--c-rood-tx)">Niet gevonden</span></div>`
+        : `<div class="vinkje-wrap${otdOk?' aan':''}${readOnly?' readonly':''}" onclick="${readOnly?'':('zetOtdAanwezig(\''+z.id+'\','+(!otdOk)+')')}" title="Klik om aan te vinken"><div class="vinkje-box">${otdOk?'✓':''}</div><span class="vinkje-label">${otdOk?'Ja (handmatig)':(otdOpen?'Onbekend':'Nee')}</span></div>`;
     html += `
-    <div class="zaak" style="border-left-color:${otdOk && ekOk && wpOk ? 'var(--c-groen)' : 'var(--c-blanco)'}">
+    <div class="zaak" style="border-left-color:${borderl}">
       <div class="zaak-top">
         <div style="min-width:0">
-          <div class="otd-naam">${esc(namen)}</div>
+          <div class="otd-naam">${esc(namen||z.object_adres||'—')}</div>
           <div class="otd-adres"><span class="pin">📍</span>${esc(z.object_adres||'—')}</div>
-          <div class="otd-meta">${esc(type)}${z.makelaar_naam ? ' · 👤 '+esc(z.makelaar_naam) : ''} · ${datum}</div>
+          <div class="otd-meta">${esc(type)}${z.makelaar_naam ? ' · 👤 '+esc(z.makelaar_naam) : ''}${z.factuur_id ? ' · 🧾 '+esc(z.factuur_id) : ''} · ${datum}</div>
         </div>
         <div class="zaak-rechts">
-          <span class="chip" style="background:${otdOk && ekOk && wpOk ? 'var(--c-groen-bg)' : 'var(--c-blanco-bg)'};color:${otdOk && ekOk && wpOk ? 'var(--c-groen-tx)' : 'var(--c-blanco-tx)'}">
-            ${otdOk && ekOk && wpOk ? 'Volledig compleet' : 'In behandeling'}
-          </span>
+          <span class="chip" style="background:${chipBg};color:${chipTx}">${chipLabel}</span>
         </div>
       </div>
       <div class="statussen-3">
         <div>
           <div class="status-label">OTD getekend</div>
-          <div class="vinkje-wrap aan${roLabel}" title="OTD is getekend via het platform">
-            <div class="vinkje-box">✓</div>
-            <span class="vinkje-label">Ja (automatisch)</span>
-          </div>
+          ${otdVinkjeHtml}
         </div>
         <div>
           <div class="status-label">Eigen klant WWFT</div>
@@ -493,9 +501,44 @@ function renderOtd(){
           : `<textarea class="notitie" rows="2" placeholder="Bijv. wederpartij makelaar gecontacteerd…" onchange="zetOtdNotitie('${z.id}',this.value)">${esc(z.wwft_notitie||'')}</textarea>`
         }
       </div>` : ''}
+      ${!readOnly && otdOk && ekOk && wpOk ? `
+      <div style="margin-top:10px;text-align:right">
+        <button onclick="archiveerOtdZaak('${z.id}')" style="font-family:inherit;font-size:13px;font-weight:600;background:var(--c-groen);color:#fff;border:none;border-radius:8px;padding:8px 16px;cursor:pointer">✓ Markeer als compleet</button>
+      </div>` : ''}
     </div>`;
   }
   if(el) el.innerHTML = html;
+}
+
+async function zetOtdAanwezig(id, waarde){
+  const z = otdZaken.find(x=>x.id===id);
+  if(!z) return;
+  const oud = z.otd_aanwezig;
+  z.otd_aanwezig = waarde;
+  renderOtd();
+  try{
+    await api({action:'otd_aanwezig', id, waarde});
+    toast('OTD aanwezig opgeslagen');
+  }catch(e){
+    z.otd_aanwezig = oud;
+    renderOtd();
+    toast('Opslaan mislukt: '+e.message, true);
+  }
+}
+
+async function archiveerOtdZaak(id){
+  if(!confirm('Zaak markeren als compleet en archiveren?')) return;
+  const z = otdZaken.find(x=>x.id===id);
+  if(!z) return;
+  try{
+    await api({action:'otd_status', id, waarde:'afgerond'});
+    otdZaken = otdZaken.filter(x=>x.id!==id);
+    renderOtd();
+    render();
+    toast('Zaak gearchiveerd');
+  }catch(e){
+    toast('Archiveren mislukt: '+e.message, true);
+  }
 }
 
 async function zetOtdVinkje(id, veld, waarde){
