@@ -1,0 +1,503 @@
+<!DOCTYPE html>
+<html lang="nl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>MvA Finance · WWFT-controle</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:opsz,wght@9..40,400;9..40,500;9..40,600;9..40,700&family=DM+Serif+Display&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --navy:#1A2B5F; --oranje:#E8500A; --zand:#B0ACA2; --rand:#E2DFD8;
+    --tekst:#1A2B5F; --grijs:#6B6760; --bg:#F7F6F3; --wit:#fff;
+    --groen:#15803d; --rood:#991b1b;
+    --c-groen:#1D9E75; --c-groen-bg:#E1F5EE; --c-groen-tx:#0F6E56;
+    --c-oranje:#EF9F27; --c-oranje-bg:#FAEEDA; --c-oranje-tx:#854F0B;
+    --c-rood:#E24B4A; --c-rood-bg:#FCEBEB; --c-rood-tx:#A32D2D;
+    --c-blanco:#B4B2A9; --c-blanco-bg:#F1EFE8; --c-blanco-tx:#5F5E5A;
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--tekst);line-height:1.5}
+  .wrap{max-width:1000px;margin:0 auto;padding:24px 16px 80px}
+
+  /* Login */
+  .login-overlay{position:fixed;inset:0;background:var(--bg);display:flex;align-items:center;justify-content:center;z-index:100;padding:20px}
+  .login-kaart{background:var(--wit);border:1px solid var(--rand);border-radius:14px;padding:32px 28px;max-width:360px;width:100%;text-align:center}
+  .login-kaart .titel{font-family:'DM Serif Display',serif;font-size:26px;color:var(--navy);margin-bottom:6px}
+  .login-kaart .sub{font-size:13px;color:var(--grijs);margin-bottom:22px}
+  .login-kaart input{font-family:inherit;font-size:15px;border:1.5px solid var(--rand);border-radius:9px;padding:11px 13px;width:100%;outline:none;color:var(--tekst);margin-bottom:12px}
+  .login-kaart input:focus{border-color:var(--navy)}
+  .login-kaart button{font-family:inherit;cursor:pointer;border:none;border-radius:9px;font-weight:600;font-size:15px;background:var(--navy);color:#fff;padding:11px 20px;width:100%}
+  .login-kaart button:hover{filter:brightness(1.1)}
+  .login-fout{font-size:13px;color:var(--rood);min-height:18px;margin-bottom:8px}
+
+  header{display:flex;align-items:flex-start;justify-content:space-between;gap:16px;margin-bottom:24px;flex-wrap:wrap}
+  .titel-h{font-family:'DM Serif Display',serif;font-size:30px;color:var(--navy);line-height:1.1}
+  .sub{font-size:13px;color:var(--grijs);margin-top:4px}
+  .terug{font-size:13px;color:var(--grijs);text-decoration:none;border:1px solid var(--rand);padding:7px 13px;border-radius:8px;background:var(--wit);white-space:nowrap}
+  .terug:hover{border-color:var(--navy);color:var(--navy)}
+
+  .totalen{display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:12px;margin-bottom:18px}
+  .tot{background:var(--wit);border:1px solid var(--rand);border-radius:12px;padding:16px 18px}
+  .tot.accent{background:var(--navy);border-color:var(--navy)}
+  .tot-label{font-size:11px;text-transform:uppercase;letter-spacing:.06em;color:var(--grijs)}
+  .tot.accent .tot-label{color:rgba(255,255,255,.6)}
+  .tot-getal{font-size:24px;font-weight:700;color:var(--navy);margin-top:4px}
+  .tot.accent .tot-getal{color:#fff}
+  .tot-getal.groen{color:var(--c-groen-tx)}
+  .tot-getal.rood{color:var(--c-rood-tx)}
+  .tot-klein{font-size:12px;color:var(--grijs);margin-top:2px}
+
+  .legenda{display:flex;gap:16px;flex-wrap:wrap;margin-bottom:18px;font-size:12px;color:var(--grijs)}
+  .legenda .dot{display:inline-block;width:10px;height:10px;border-radius:3px;vertical-align:1px;margin-right:5px}
+
+  .filterbar{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:18px}
+  .filterbar button{font-family:inherit;cursor:pointer;font-size:13px;font-weight:600;border:1.5px solid var(--rand);background:var(--wit);color:var(--grijs);border-radius:20px;padding:7px 14px;display:inline-flex;align-items:center;gap:7px;transition:border-color .15s,color .15s,background .15s}
+  .filterbar button:hover{border-color:var(--navy);color:var(--navy)}
+  .filterbar button.actief{border-color:var(--navy);background:var(--navy);color:#fff}
+  .filterbar .telw{font-size:11px;font-weight:700;background:rgba(26,43,95,.08);color:inherit;padding:1px 7px;border-radius:10px;min-width:20px;text-align:center}
+  .filterbar button.actief .telw{background:rgba(255,255,255,.22)}
+
+  .makelaarbar{display:flex;align-items:center;gap:8px;margin:-6px 0 18px;flex-wrap:wrap}
+  .makelaarbar label{font-size:12px;text-transform:uppercase;letter-spacing:.05em;color:var(--grijs)}
+  .makelaarbar select{font-family:inherit;font-size:13px;font-weight:600;border:1.5px solid var(--rand);background:var(--wit);color:var(--navy);border-radius:8px;padding:7px 11px;width:auto;cursor:pointer}
+  .makelaarbar select:focus{border-color:var(--navy)}
+
+  .lijst{display:flex;flex-direction:column;gap:10px}
+  .zaak{background:var(--wit);border:1px solid var(--rand);border-left:4px solid var(--c-blanco);border-radius:10px;padding:13px 15px}
+  .zaak-top{display:flex;justify-content:space-between;align-items:flex-start;gap:10px;flex-wrap:wrap}
+  .zaak-naam{font-weight:600;font-size:15px;color:var(--navy)}
+  .zaak-adres{font-size:13px;color:var(--tekst);margin-top:2px}
+  .zaak-adres .pin{color:var(--zand);margin-right:4px}
+  .zaak-meta{font-size:12px;color:var(--grijs);margin-top:2px}
+  .zaak-rechts{text-align:right;white-space:nowrap}
+  .chip{display:inline-block;font-size:12px;font-weight:600;padding:3px 11px;border-radius:20px}
+  .zaak-bedrag{font-size:13px;color:var(--grijs);margin-top:4px}
+  .zaak-datum{font-size:12px;color:var(--zand);margin-top:1px}
+
+  .statussen{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-top:13px}
+  .status-label{font-size:11px;text-transform:uppercase;letter-spacing:.04em;color:var(--grijs);margin-bottom:4px}
+  select{font-family:inherit;font-size:14px;border:1.5px solid var(--rand);border-radius:7px;padding:7px 9px;outline:none;width:100%;background:#fff;color:var(--tekst)}
+  select:focus{border-color:var(--navy)}
+  .status-waarde{font-size:14px;font-weight:600;color:var(--tekst);padding:7px 9px;border:1.5px solid var(--rand);border-radius:7px;background:#FAF9F6}
+
+  .notitie-blok{margin-top:12px}
+  textarea.notitie{font-family:inherit;font-size:14px;border:1.5px solid var(--rand);border-radius:7px;padding:7px 9px;outline:none;width:100%;background:#fff;color:var(--tekst);resize:vertical;min-height:38px;line-height:1.45}
+  textarea.notitie:focus{border-color:var(--navy)}
+  .notitie-waarde{font-size:14px;color:var(--tekst);padding:7px 9px;border:1.5px solid var(--rand);border-radius:7px;background:#FAF9F6;white-space:pre-wrap}
+  .notitie-waarde.leeg-notitie{color:var(--zand);font-style:italic;font-weight:400}
+
+  .leeg,.laden{text-align:center;padding:40px;color:var(--grijs);font-size:14px;background:var(--wit);border:1px solid var(--rand);border-radius:12px}
+  .toast{position:fixed;bottom:24px;left:50%;transform:translateX(-50%);background:var(--navy);color:#fff;padding:11px 20px;border-radius:10px;font-size:14px;box-shadow:0 8px 24px rgba(0,0,0,.18);opacity:0;transition:opacity .25s,transform .25s;pointer-events:none;z-index:50}
+  .toast.show{opacity:1;transform:translateX(-50%) translateY(-4px)}
+  .toast.fout{background:var(--rood)}
+  .footer{text-align:center;font-size:12px;color:var(--zand);margin-top:32px}
+
+  @media (max-width:640px){
+    .titel-h{font-size:24px}
+    .statussen{grid-template-columns:1fr}
+  }
+</style>
+</head>
+<body>
+
+<div class="login-overlay" id="login">
+  <div class="login-kaart">
+    <div class="titel">MvA Finance</div>
+    <div class="sub" id="login-sub">Inloggen&hellip;</div>
+  </div>
+</div>
+
+<div class="wrap" id="app" style="display:none">
+  <header>
+    <div>
+      <div class="titel-h">WWFT-controle</div>
+      <div class="sub" id="hdr-sub">Actuele courtagenota's · controleer ID/WWFT van eigen klant en wederpartij</div>
+    </div>
+    <a class="terug" href="https://portal.makelaarsvan.nl/">← Terug naar portal</a>
+  </header>
+
+  <div id="readonly-banner" style="display:none;background:var(--c-oranje-bg);color:var(--c-oranje-tx);border:1px solid var(--c-oranje);border-radius:10px;padding:10px 14px;font-size:13px;margin-bottom:16px">
+    <b>Alleen-lezen.</b> Je ziet hier je eigen WWFT-dossiers. De ID/WWFT-controle zelf wordt door directie en compliance bijgehouden.
+  </div>
+
+  <div class="totalen" id="totalen"></div>
+
+  <div class="legenda">
+    <span><span class="dot" style="background:var(--c-groen)"></span>Groen — courtage vrij</span>
+    <span><span class="dot" style="background:var(--c-oranje)"></span>Oranje — wederpartij weigert</span>
+    <span><span class="dot" style="background:var(--c-rood)"></span>Rood — niet compleet</span>
+    <span><span class="dot" style="background:var(--c-blanco)"></span>Blanco — nog niet gestart</span>
+  </div>
+
+  <div class="filterbar" id="filterbar"></div>
+
+  <div class="makelaarbar" id="makelaarbar" style="display:none"></div>
+
+  <div id="otd-blok" style="display:none;margin-bottom:24px">
+    <div style="font-weight:700;font-size:15px;margin-bottom:3px">Nieuwe zaken uit OTD</div>
+    <div style="font-size:12.5px;color:#8a8478;margin-bottom:10px">Automatisch aangemaakt zodra een opdracht tot dienstverlening is ondertekend. Start de Move-check (Realworks) en werk de status hier bij. Doorbelasting: &euro;&nbsp;1 per persoon.</div>
+    <div id="otd-lijst"></div>
+    <div id="otd-doorbelasting"></div>
+  </div>
+
+  <div class="lijst" id="lijst">
+    <div class="laden">Laden…</div>
+  </div>
+
+  <div class="footer"><b>MvA Intelligence</b> · Finance · WWFT-module · 2026</div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+const API = '/.netlify/functions/wwft';
+const SB_URL = 'https://olfcrzusdkijxroxvsgm.supabase.co';
+const SB_KEY = 'sb_publishable_0OmJOAM_XZWCW8e_vgx2Qg_L3tdRsc4';
+let sbToken = null;
+let zaken = [];
+let readOnly = false;
+let filter = 'alle';
+let makelaarFilter = 'alle';
+
+function esc(s){ return String(s==null?'':s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])); }
+function euro(n){ return n==null ? '—' : '€ ' + Number(n).toLocaleString('nl-NL',{minimumFractionDigits:2,maximumFractionDigits:2}); }
+function datumNL(s){
+  if(!s) return '—';
+  const d = new Date(s);
+  if(isNaN(d)) return '—';
+  return d.toLocaleDateString('nl-NL',{day:'2-digit',month:'2-digit',year:'numeric'});
+}
+
+function toast(msg, fout){
+  const t = document.getElementById('toast');
+  t.textContent = msg; t.className = 'toast show' + (fout ? ' fout' : '');
+  setTimeout(()=>{ t.className = 'toast'; }, 2600);
+}
+
+function startApp(){
+  document.getElementById('login').style.display = 'none';
+  document.getElementById('app').style.display = 'block';
+}
+function setLoginSub(html){
+  const el = document.getElementById('login-sub');
+  if(el) el.innerHTML = html;
+}
+
+async function api(body){
+  const r = await fetch(API, {method:'POST', headers:{'Content-Type':'application/json','Authorization':'Bearer '+(sbToken||'')}, body:JSON.stringify(body)});
+  const j = await r.json();
+  if(!r.ok || j.error) throw new Error(j.error || ('HTTP '+r.status));
+  return j;
+}
+
+async function laad(){
+  try{
+    const j = await api({action:'lijst'});
+    zaken = j.zaken || [];
+    otdZaken = j.otd_zaken || [];
+    readOnly = !!j.readonly;
+    if(readOnly){
+      document.getElementById('readonly-banner').style.display = 'block';
+      const hs = document.getElementById('hdr-sub');
+      if(hs) hs.textContent = "Je eigen courtagenota's · WWFT-status (alleen-lezen)";
+    }
+    startApp();
+    render();
+    renderOtd();
+  }catch(e){
+    setLoginSub(esc(e.message) + ' <a href="https://portal.makelaarsvan.nl/" style="color:var(--navy)">Naar de portal</a>.');
+  }
+}
+
+function kleur(z){
+  const e = z.eigen_klant_status, w = z.wederpartij_status;
+  if(e==='ja' && w==='ja') return 'groen';
+  if(e==='ja' && w==='weigert') return 'oranje';
+  if((e==='open'||!e) && (w==='open'||!w)) return 'blanco';
+  return 'rood';
+}
+const conf = {
+  groen:{bar:'var(--c-groen)', bg:'var(--c-groen-bg)', tx:'var(--c-groen-tx)', label:'Courtage vrij'},
+  oranje:{bar:'var(--c-oranje)', bg:'var(--c-oranje-bg)', tx:'var(--c-oranje-tx)', label:'Wederpartij weigert'},
+  rood:{bar:'var(--c-rood)', bg:'var(--c-rood-bg)', tx:'var(--c-rood-tx)', label:'Niet compleet'},
+  blanco:{bar:'var(--c-blanco)', bg:'var(--c-blanco-bg)', tx:'var(--c-blanco-tx)', label:'Nog niet gestart'},
+};
+const OPTS = [['open','Open'],['ja','Ja'],['nee','Nee'],['weigert','Weigert']];
+
+// ── OTD-zaken (automatisch uit ondertekende OTD's) ──────────────────────────
+let otdZaken = [];
+const OTD_OPTS = [['te_starten','Te starten'],['gestart','Gestart'],['afgerond','Afgerond']];
+const OTD_KLEUR = { te_starten:'var(--c-blanco)', gestart:'var(--c-oranje)', afgerond:'var(--c-groen)' };
+
+function renderOtd(){
+  const blok = document.getElementById('otd-blok');
+  if(!otdZaken.length){ blok.style.display='none'; return; }
+  blok.style.display='block';
+
+  const kaarten = otdZaken.map(z => {
+    const namen = (z.opdrachtgevers||[]).map(o=>o.naam).filter(Boolean).join(', ') || '—';
+    const docLabel = z.documenttype === 'aankoop' ? 'Aankoop' : 'Verkoop';
+    const obj = z.object_adres || (z.documenttype==='aankoop' ? 'Aankoopbegeleiding' : '—');
+    const statusCtl = readOnly
+      ? `<div class="status-waarde">${esc((OTD_OPTS.find(o=>o[0]===z.status)||['','—'])[1])}</div>`
+      : `<select onchange="zetOtdStatus('${z.id}', this.value)">${OTD_OPTS.map(o=>`<option value="${o[0]}"${o[0]===z.status?' selected':''}>${o[1]}</option>`).join('')}</select>`;
+    const notitieCtl = readOnly
+      ? (z.wwft_notitie ? `<div class="notitie-waarde">${esc(z.wwft_notitie)}</div>` : '')
+      : `<textarea class="notitie" rows="1" placeholder="Notitie…" onchange="zetOtdNotitie('${z.id}', this.value)">${esc(z.wwft_notitie||'')}</textarea>`;
+    const doorbelastCtl = readOnly ? '' :
+      `<label style="font-size:12px;color:#8a8478;display:inline-flex;align-items:center;gap:5px;white-space:nowrap"><input type="checkbox" ${z.doorbelast?'checked':''} onchange="zetOtdDoorbelast('${z.id}', this.checked)"> doorbelast</label>`;
+    return `<div style="background:#fff;border:1px solid #e7e2d8;border-left:4px solid ${OTD_KLEUR[z.status]||'var(--c-blanco)'};border-radius:10px;padding:12px 14px;margin-bottom:8px">
+      <div style="display:flex;justify-content:space-between;gap:12px;flex-wrap:wrap;align-items:center">
+        <div style="min-width:220px">
+          <b>${esc(obj)}</b> <span style="font-size:11.5px;background:#f1ede4;border-radius:8px;padding:2px 8px;margin-left:4px">${docLabel}</span>
+          <div style="font-size:12.5px;color:#8a8478;margin-top:2px">${esc(namen)} · ${z.aantal_personen} ${z.aantal_personen===1?'persoon':'personen'} · ${esc(z.makelaar_naam||z.makelaar_email||'—')} · ${datumNL(z.ondertekend_op)}</div>
+        </div>
+        <div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap">${statusCtl}${doorbelastCtl}</div>
+      </div>
+      ${notitieCtl ? `<div style="margin-top:8px">${notitieCtl}</div>` : ''}
+    </div>`;
+  }).join('');
+  document.getElementById('otd-lijst').innerHTML = kaarten;
+
+  // Doorbelastingsoverzicht (alleen volledige toegang): per maand per makelaar, €1 p.p.
+  const db = document.getElementById('otd-doorbelasting');
+  if(readOnly){ db.innerHTML=''; return; }
+  const perMaand = {};
+  for(const z of otdZaken){
+    const m = (z.ondertekend_op||'').slice(0,7) || 'onbekend';
+    const mk = z.makelaar_naam || z.makelaar_email || 'Onbekend';
+    perMaand[m] = perMaand[m] || {};
+    perMaand[m][mk] = perMaand[m][mk] || { personen:0, open:0 };
+    perMaand[m][mk].personen += (z.aantal_personen||1);
+    if(!z.doorbelast) perMaand[m][mk].open += (z.aantal_personen||1);
+  }
+  const regels = Object.keys(perMaand).sort().reverse().map(m => {
+    const rs = Object.keys(perMaand[m]).sort().map(mk => {
+      const x = perMaand[m][mk];
+      return `<div style="display:flex;justify-content:space-between;font-size:12.5px;padding:2px 0"><span>${esc(mk)}</span><span>${x.personen} pers. → ${euro(x.personen)}${x.open?` <b style="color:var(--c-oranje-tx)">(${euro(x.open)} open)</b>`:''}</span></div>`;
+    }).join('');
+    return `<div style="margin-bottom:6px"><div style="font-size:12px;font-weight:700;color:#8a8478">${esc(m)}</div>${rs}</div>`;
+  }).join('');
+  db.innerHTML = regels ? `<div style="background:#faf8f3;border:1px dashed #d9d2c2;border-radius:10px;padding:10px 14px;margin-top:4px"><div style="font-weight:700;font-size:13px;margin-bottom:6px">Doorbelasting Move-checks</div>${regels}</div>` : '';
+}
+
+async function zetOtdStatus(id, waarde){
+  const z = otdZaken.find(x=>x.id===id); const oud = z && z.status;
+  if(z) z.status = waarde;
+  renderOtd();
+  try{ await api({action:'otd_status', id, waarde}); toast('Opgeslagen'); }
+  catch(e){ if(z) z.status = oud; renderOtd(); toast('Opslaan mislukt: '+e.message); }
+}
+async function zetOtdNotitie(id, waarde){
+  const z = otdZaken.find(x=>x.id===id); const oud = z && z.wwft_notitie;
+  if(z) z.wwft_notitie = waarde;
+  try{ await api({action:'otd_notitie', id, waarde}); toast('Notitie opgeslagen'); }
+  catch(e){ if(z) z.wwft_notitie = oud; renderOtd(); toast('Opslaan mislukt: '+e.message); }
+}
+async function zetOtdDoorbelast(id, waarde){
+  const z = otdZaken.find(x=>x.id===id); const oud = z && z.doorbelast;
+  if(z) z.doorbelast = waarde;
+  renderOtd();
+  try{ await api({action:'otd_doorbelast', id, waarde}); toast('Opgeslagen'); }
+  catch(e){ if(z) z.doorbelast = oud; renderOtd(); toast('Opslaan mislukt: '+e.message); }
+}
+
+function selectHtml(z, veld){
+  const cur = z[veld] || 'open';
+  const opts = OPTS.map(o=>`<option value="${o[0]}"${o[0]===cur?' selected':''}>${o[1]}</option>`).join('');
+  return `<select onchange="zetStatus('${esc(z.factuurnummer)}','${veld}',this.value)">${opts}</select>`;
+}
+
+function statusVeldHtml(z, veld){
+  if(readOnly){
+    const cur = z[veld] || 'open';
+    const o = OPTS.find(x=>x[0]===cur);
+    return `<div class="status-waarde">${esc(o ? o[1] : '—')}</div>`;
+  }
+  return selectHtml(z, veld);
+}
+
+function notitieVeldHtml(z){
+  const huidige = z.wwft_notitie || '';
+  if(readOnly){
+    return huidige
+      ? `<div class="notitie-waarde">${esc(huidige)}</div>`
+      : `<div class="notitie-waarde leeg-notitie">Geen notitie</div>`;
+  }
+  return `<textarea class="notitie" rows="2" placeholder="Bijv. e-mail gestuurd naar makelaar…" onchange="zetNotitie('${esc(z.factuurnummer)}', this.value)">${esc(huidige)}</textarea>`;
+}
+
+function typeLabel(z){
+  if(z.type && /courtage/i.test(z.type)){
+    if(/aankoop/i.test(z.betreft||'')) return 'Aankoop';
+    if(/verkoop/i.test(z.betreft||'')) return 'Verkoop';
+  }
+  return z.type ? z.type.replace(/^00ALGEM\s*/,'') : '';
+}
+
+function setFilter(f){ filter = (filter===f) ? 'alle' : f; render(); }
+function setMakelaar(v){ makelaarFilter = v; render(); }
+
+function render(){
+  const naMakelaar = zaken.filter(z => {
+    const zid = z.makelaar_id==null ? '' : String(z.makelaar_id);
+    return makelaarFilter==='alle' || zid===String(makelaarFilter);
+  });
+
+  let groen=0, aandacht=0;
+  const telling = {alle:naMakelaar.length, groen:0, oranje:0, rood:0, blanco:0};
+  for(const z of naMakelaar){ telling[kleur(z)]++; }
+  const fknoppen = [
+    ['alle','Alle',null],
+    ['groen','Courtage vrij','var(--c-groen)'],
+    ['rood','Niet compleet','var(--c-rood)'],
+    ['oranje','Weigert','var(--c-oranje)'],
+    ['blanco','Nog niet gestart','var(--c-blanco)'],
+  ];
+  document.getElementById('filterbar').innerHTML = fknoppen.map(b=>{
+    const act = filter===b[0] ? ' actief' : '';
+    const dot = b[2] ? `<span style="width:9px;height:9px;border-radius:3px;display:inline-block;background:${b[2]}"></span>` : '';
+    return `<button class="${act.trim()}" onclick="setFilter('${b[0]}')">${dot}${b[1]}<span class="telw">${telling[b[0]]}</span></button>`;
+  }).join('');
+
+  const mbar = document.getElementById('makelaarbar');
+  if(!readOnly){
+    const perMak = new Map();
+    for(const z of zaken){
+      const id = z.makelaar_id==null ? '' : String(z.makelaar_id);
+      const naam = z.makelaar_naam || 'Onbekend';
+      if(!perMak.has(id)) perMak.set(id, {naam, n:0});
+      perMak.get(id).n++;
+    }
+    const opties = [...perMak.entries()].sort((a,b)=>a[1].naam.localeCompare(b[1].naam,'nl'));
+    let sel = `<option value="alle"${makelaarFilter==='alle'?' selected':''}>Alle makelaars (${zaken.length})</option>`;
+    sel += opties.map(([id,o])=>`<option value="${esc(id)}"${String(makelaarFilter)===id?' selected':''}>${esc(o.naam)} (${o.n})</option>`).join('');
+    mbar.innerHTML = `<label for="makelaarSelect">Makelaar</label><select id="makelaarSelect" onchange="setMakelaar(this.value)">${sel}</select>`;
+    mbar.style.display = 'flex';
+  } else {
+    mbar.style.display = 'none';
+  }
+
+  let html = '';
+  let zichtbaar = 0;
+  for(const z of naMakelaar){
+    const k = kleur(z); const c = conf[k];
+    if(k==='groen') groen++;
+    if(k==='rood'||k==='oranje') aandacht++;
+    if(filter!=='alle' && k!==filter) continue;
+    zichtbaar++;
+    html += `
+    <div class="zaak" style="border-left-color:${c.bar}">
+      <div class="zaak-top">
+        <div style="min-width:0">
+          <div class="zaak-naam">${esc(z.relatie)}</div>
+          <div class="zaak-adres"><span class="pin">📍</span>${esc(z.adres || z.betreft || '—')}</div>
+          <div class="zaak-meta">${esc(z.factuurnummer)} · ${esc(z.afdeling||'')} · ${esc(typeLabel(z))}${z.makelaar_naam ? ' · 👤 '+esc(z.makelaar_naam) : ''}</div>
+        </div>
+        <div class="zaak-rechts">
+          <span class="chip" style="background:${c.bg};color:${c.tx}">${c.label}</span>
+          <div class="zaak-bedrag">${euro(z.bedrag_incl)}</div>
+          <div class="zaak-datum">${datumNL(z.transportdatum || z.datum)}</div>
+        </div>
+      </div>
+      <div class="statussen">
+        <div>
+          <div class="status-label">Eigen klant WWFT</div>
+          ${statusVeldHtml(z,'eigen_klant_status')}
+        </div>
+        <div>
+          <div class="status-label">Wederpartij WWFT</div>
+          ${statusVeldHtml(z,'wederpartij_status')}
+        </div>
+      </div>
+      <div class="notitie-blok">
+        <div class="status-label">Notitie / vervolgactie</div>
+        ${notitieVeldHtml(z)}
+      </div>
+    </div>`;
+  }
+  if(!zaken.length) html = '<div class="leeg">Geen actuele WWFT-zaken.</div>';
+  else if(!zichtbaar) html = '<div class="leeg">Geen zaken in dit filter.</div>';
+  document.getElementById('lijst').innerHTML = html;
+
+  document.getElementById('totalen').innerHTML = `
+    <div class="tot accent">
+      <div class="tot-label">Actuele zaken</div>
+      <div class="tot-getal">${naMakelaar.length}</div>
+      <div class="tot-klein">courtagenota's in behandeling</div>
+    </div>
+    <div class="tot">
+      <div class="tot-label">Courtage vrij</div>
+      <div class="tot-getal groen">${groen}</div>
+      <div class="tot-klein">beide partijen compleet</div>
+    </div>
+    <div class="tot">
+      <div class="tot-label">Vraagt aandacht</div>
+      <div class="tot-getal rood">${aandacht}</div>
+      <div class="tot-klein">nog niet compleet</div>
+    </div>`;
+}
+
+async function zetStatus(factuurnummer, veld, waarde){
+  const z = zaken.find(x=>x.factuurnummer===factuurnummer);
+  const oud = z ? z[veld] : null;
+  if(z) z[veld] = waarde;
+  render();
+  try{
+    await api({action:'status', factuurnummer, veld, waarde});
+    toast('Opgeslagen');
+  }catch(e){
+    if(z) z[veld] = oud;
+    render();
+    toast('Opslaan mislukt: '+e.message, true);
+  }
+}
+
+async function zetNotitie(factuurnummer, waarde){
+  const z = zaken.find(x=>x.factuurnummer===factuurnummer);
+  const oud = z ? (z.wwft_notitie || '') : '';
+  if(waarde === oud) return;            // niets gewijzigd
+  if(z) z.wwft_notitie = waarde;        // optimistisch, geen herrender (focus behouden)
+  try{
+    await api({action:'notitie', factuurnummer, waarde});
+    toast('Notitie opgeslagen');
+  }catch(e){
+    if(z) z.wwft_notitie = oud;
+    render();
+    toast('Opslaan mislukt: '+e.message, true);
+  }
+}
+
+(async function(){
+  if(!location.hostname.endsWith('makelaarsvan.nl')){
+    setLoginSub('Open deze app via <a href="https://finance.makelaarsvan.nl/" style="color:var(--navy)">finance.makelaarsvan.nl</a> om in te loggen.');
+    return;
+  }
+  try{
+    const { createBrowserClient } = await import('https://esm.sh/@supabase/ssr@0.5.2');
+    const sb = createBrowserClient(SB_URL, SB_KEY, { cookieOptions:{ domain:'.makelaarsvan.nl', path:'/', sameSite:'lax', secure:true, maxAge:60*60*24*30 } });
+    const { data:{ session } } = await sb.auth.getSession();
+    if(!session || !session.user){
+      if(sessionStorage.getItem('mva_sso_redirect')!=='1'){
+        sessionStorage.setItem('mva_sso_redirect','1');
+        location.href = 'https://portal.makelaarsvan.nl/';
+      } else {
+        setLoginSub('Niet ingelogd. <a href="https://portal.makelaarsvan.nl/" style="color:var(--navy)">Log in via de portal</a>.');
+      }
+      return;
+    }
+    sessionStorage.removeItem('mva_sso_redirect');
+    sbToken = session.access_token;
+    // De server bepaalt wat deze gebruiker mag zien:
+    //   directie/compliance → alle zaken + bewerken
+    //   pilot-makelaar       → eigen zaken, alleen-lezen
+    //   anders               → 403, geen toegang
+    laad();
+  }catch(e){
+    setLoginSub('Kon de inlogservice niet laden. Ververs de pagina.');
+  }
+})();
+</script>
+</body>
+</html>
