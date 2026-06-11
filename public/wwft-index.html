@@ -136,7 +136,7 @@
 
   <div id="otd-blok" style="display:none;margin-bottom:24px">
     <div style="font-weight:700;font-size:15px;margin-bottom:3px">Nieuwe zaken uit OTD</div>
-    <div style="font-size:12.5px;color:#8a8478;margin-bottom:10px">Automatisch aangemaakt zodra een opdracht tot dienstverlening is ondertekend. Start de Move-check (Realworks) en werk de status hier bij. Doorbelasting: &euro;&nbsp;1 per persoon.</div>
+    <div style="font-size:12.5px;color:#8a8478;margin-bottom:10px">Automatisch aangemaakt zodra een opdracht tot dienstverlening is ondertekend. Start de Move-check (Realworks) en werk de status hier bij. Doorbelasting: &euro;&nbsp;10 per dossier + &euro;&nbsp;1 per persoon.</div>
     <div id="otd-lijst"></div>
     <div id="otd-doorbelasting"></div>
   </div>
@@ -260,7 +260,10 @@ function renderOtd(){
   }).join('');
   document.getElementById('otd-lijst').innerHTML = kaarten;
 
-  // Doorbelastingsoverzicht (alleen volledige toegang): per maand per makelaar, €1 p.p.
+  // Doorbelastingsoverzicht (alleen volledige toegang): per maand per makelaar.
+  // Move-tarieven: €10 per dossier (activering) + €1 per persoon (WWFT-check).
+  const MOVE_DOSSIER_PRIJS = 10;
+  const MOVE_CHECK_PRIJS = 1;
   const db = document.getElementById('otd-doorbelasting');
   if(readOnly){ db.innerHTML=''; return; }
   const perMaand = {};
@@ -268,18 +271,21 @@ function renderOtd(){
     const m = (z.ondertekend_op||'').slice(0,7) || 'onbekend';
     const mk = z.makelaar_naam || z.makelaar_email || 'Onbekend';
     perMaand[m] = perMaand[m] || {};
-    perMaand[m][mk] = perMaand[m][mk] || { personen:0, open:0 };
+    perMaand[m][mk] = perMaand[m][mk] || { dossiers:0, personen:0, open:0 };
+    const kosten = MOVE_DOSSIER_PRIJS + MOVE_CHECK_PRIJS * (z.aantal_personen||1);
+    perMaand[m][mk].dossiers += 1;
     perMaand[m][mk].personen += (z.aantal_personen||1);
-    if(!z.doorbelast) perMaand[m][mk].open += (z.aantal_personen||1);
+    if(!z.doorbelast) perMaand[m][mk].open += kosten;
   }
   const regels = Object.keys(perMaand).sort().reverse().map(m => {
     const rs = Object.keys(perMaand[m]).sort().map(mk => {
       const x = perMaand[m][mk];
-      return `<div style="display:flex;justify-content:space-between;font-size:12.5px;padding:2px 0"><span>${esc(mk)}</span><span>${x.personen} pers. → ${euro(x.personen)}${x.open?` <b style="color:var(--c-oranje-tx)">(${euro(x.open)} open)</b>`:''}</span></div>`;
+      const totaal = x.dossiers*MOVE_DOSSIER_PRIJS + x.personen*MOVE_CHECK_PRIJS;
+      return `<div style="display:flex;justify-content:space-between;font-size:12.5px;padding:2px 0"><span>${esc(mk)}</span><span>${x.dossiers} ${x.dossiers===1?'dossier':'dossiers'} · ${x.personen} pers. → ${euro(totaal)}${x.open?` <b style="color:var(--c-oranje-tx)">(${euro(x.open)} open)</b>`:''}</span></div>`;
     }).join('');
     return `<div style="margin-bottom:6px"><div style="font-size:12px;font-weight:700;color:#8a8478">${esc(m)}</div>${rs}</div>`;
   }).join('');
-  db.innerHTML = regels ? `<div style="background:#faf8f3;border:1px dashed #d9d2c2;border-radius:10px;padding:10px 14px;margin-top:4px"><div style="font-weight:700;font-size:13px;margin-bottom:6px">Doorbelasting Move-checks</div>${regels}</div>` : '';
+  db.innerHTML = regels ? `<div style="background:#faf8f3;border:1px dashed #d9d2c2;border-radius:10px;padding:10px 14px;margin-top:4px"><div style="font-weight:700;font-size:13px;margin-bottom:6px">Doorbelasting Move (&euro;10/dossier + &euro;1/persoon)</div>${regels}</div>` : '';
 }
 
 async function zetOtdStatus(id, waarde){
