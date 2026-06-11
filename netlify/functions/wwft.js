@@ -126,7 +126,7 @@ exports.handler = async (event) => {
       // OTD-zaken: automatisch aangemaakt door de Signhost-webhook bij ondertekening.
       let otdPath =
         'wwft_zaken?select=id,bron,otd_dossier_id,object_adres,documenttype,makelaar_email,makelaar_naam,' +
-        'opdrachtgevers,aantal_personen,status,wwft_notitie,doorbelast,ondertekend_op' +
+        'opdrachtgevers,aantal_personen,status,wwft_notitie,doorbelast,ondertekend_op,toegewezen_aan' +
         '&order=ondertekend_op.desc.nullslast';
       if (!volledigeToegang) {
         otdPath += `&makelaar_email=eq.${encodeURIComponent(gebruiker.email || '')}`;
