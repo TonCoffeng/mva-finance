@@ -87,6 +87,21 @@
   .notitie-waarde{font-size:14px;color:var(--tekst);padding:7px 9px;border:1.5px solid var(--rand);border-radius:7px;background:#FAF9F6;white-space:pre-wrap}
   .notitie-waarde.leeg-notitie{color:var(--zand);font-style:italic;font-weight:400}
 
+  /* OTD-zaken sectie */
+  .sectie-kop{font-family:'DM Serif Display',serif;font-size:20px;color:var(--navy);margin:32px 0 12px;padding-bottom:8px;border-bottom:2px solid var(--rand)}
+  .sectie-kop span{font-family:'DM Sans',sans-serif;font-size:12px;font-weight:600;text-transform:uppercase;letter-spacing:.05em;color:var(--grijs);margin-left:10px;vertical-align:middle}
+  .statussen-3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px;margin-top:13px}
+  .vinkje-wrap{display:flex;align-items:center;gap:8px;padding:7px 10px;border:1.5px solid var(--rand);border-radius:7px;background:#fff;cursor:pointer;transition:border-color .15s}
+  .vinkje-wrap:hover{border-color:var(--navy)}
+  .vinkje-wrap.aan{border-color:var(--c-groen);background:var(--c-groen-bg)}
+  .vinkje-box{width:18px;height:18px;border:2px solid var(--rand);border-radius:4px;flex-shrink:0;display:flex;align-items:center;justify-content:center;font-size:12px;background:#fff;transition:all .15s}
+  .vinkje-wrap.aan .vinkje-box{background:var(--c-groen);border-color:var(--c-groen);color:#fff}
+  .vinkje-label{font-size:13px;color:var(--tekst);font-weight:500}
+  .vinkje-wrap.readonly{cursor:default;pointer-events:none}
+  .otd-naam{font-weight:600;font-size:15px;color:var(--navy)}
+  .otd-adres{font-size:13px;color:var(--tekst);margin-top:2px}
+  .otd-meta{font-size:12px;color:var(--grijs);margin-top:2px}
+
   .leeg,.laden{text-align:center;padding:40px;color:var(--grijs);font-size:14px;background:var(--wit);border:1px solid var(--rand);border-radius:12px}
   .toast{position:fixed;bottom:24px;left:50%;transform:translateX(-50%);background:var(--navy);color:#fff;padding:11px 20px;border-radius:10px;font-size:14px;box-shadow:0 8px 24px rgba(0,0,0,.18);opacity:0;transition:opacity .25s,transform .25s;pointer-events:none;z-index:50}
   .toast.show{opacity:1;transform:translateX(-50%) translateY(-4px)}
@@ -96,6 +111,7 @@
   @media (max-width:640px){
     .titel-h{font-size:24px}
     .statussen{grid-template-columns:1fr}
+    .statussen-3{grid-template-columns:1fr}
   }
 </style>
 </head>
@@ -138,6 +154,11 @@
     <div class="laden">Laden…</div>
   </div>
 
+  <div class="sectie-kop">Directiecontrole — OTD-zaken <span id="otd-telling"></span></div>
+  <div class="lijst" id="otd-lijst">
+    <div class="laden">Laden…</div>
+  </div>
+
   <div class="footer"><b>MvA Intelligence</b> · Finance · WWFT-module · 2026</div>
 </div>
 
@@ -149,6 +170,7 @@ const SB_URL = 'https://olfcrzusdkijxroxvsgm.supabase.co';
 const SB_KEY = 'sb_publishable_0OmJOAM_XZWCW8e_vgx2Qg_L3tdRsc4';
 let sbToken = null;
 let zaken = [];
+let otdZaken = [];
 let readOnly = false;
 let filter = 'alle';
 let makelaarFilter = 'alle';
@@ -188,6 +210,7 @@ async function laad(){
   try{
     const j = await api({action:'lijst'});
     zaken = j.zaken || [];
+    otdZaken = j.otd_zaken || [];
     readOnly = !!j.readonly;
     if(readOnly){
       document.getElementById('readonly-banner').style.display = 'block';
@@ -196,6 +219,7 @@ async function laad(){
     }
     startApp();
     render();
+    renderOtd();
   }catch(e){
     setLoginSub(esc(e.message) + ' <a href="https://portal.makelaarsvan.nl/" style="color:var(--navy)">Naar de portal</a>.');
   }
@@ -378,6 +402,106 @@ async function zetNotitie(factuurnummer, waarde){
   }catch(e){
     if(z) z.wwft_notitie = oud;
     render();
+    toast('Opslaan mislukt: '+e.message, true);
+  }
+}
+
+function renderOtd(){
+  const el = document.getElementById('otd-lijst');
+  const tel = document.getElementById('otd-telling');
+  if(!otdZaken.length){
+    if(tel) tel.textContent = '';
+    if(el) el.innerHTML = '<div class="leeg">Nog geen OTD-zaken geregistreerd.</div>';
+    return;
+  }
+  if(tel) tel.textContent = otdZaken.length + ' zaak' + (otdZaken.length !== 1 ? 'en' : '');
+  let html = '';
+  for(const z of otdZaken){
+    const namen = (z.opdrachtgevers||[]).map(o=>o.naam).filter(Boolean).join(', ') || '—';
+    const type = z.documenttype === 'aankoop' ? 'Aankoop' : z.documenttype === 'verkoop' ? 'Verkoop' : (z.documenttype||'');
+    const datum = z.ondertekend_op ? datumNL(z.ondertekend_op) : '—';
+    const ekOk  = z.eigen_klant_ok  === true;
+    const wpOk  = z.wederpartij_ok  === true;
+    const otdOk = z.otd_aanwezig    === true || z.bron === 'otd'; // vanuit OTD-webhook = altijd getekend
+    const roLabel = readOnly ? ' readonly' : '';
+    html += `
+    <div class="zaak" style="border-left-color:${otdOk && ekOk && wpOk ? 'var(--c-groen)' : 'var(--c-blanco)'}">
+      <div class="zaak-top">
+        <div style="min-width:0">
+          <div class="otd-naam">${esc(namen)}</div>
+          <div class="otd-adres"><span class="pin">📍</span>${esc(z.object_adres||'—')}</div>
+          <div class="otd-meta">${esc(type)}${z.makelaar_naam ? ' · 👤 '+esc(z.makelaar_naam) : ''} · ${datum}</div>
+        </div>
+        <div class="zaak-rechts">
+          <span class="chip" style="background:${otdOk && ekOk && wpOk ? 'var(--c-groen-bg)' : 'var(--c-blanco-bg)'};color:${otdOk && ekOk && wpOk ? 'var(--c-groen-tx)' : 'var(--c-blanco-tx)'}">
+            ${otdOk && ekOk && wpOk ? 'Volledig compleet' : 'In behandeling'}
+          </span>
+        </div>
+      </div>
+      <div class="statussen-3">
+        <div>
+          <div class="status-label">OTD getekend</div>
+          <div class="vinkje-wrap aan${roLabel}" title="OTD is getekend via het platform">
+            <div class="vinkje-box">✓</div>
+            <span class="vinkje-label">Ja (automatisch)</span>
+          </div>
+        </div>
+        <div>
+          <div class="status-label">Eigen klant WWFT</div>
+          <div class="vinkje-wrap${ekOk?' aan':''}${roLabel}" onclick="${readOnly?'':('zetOtdVinkje(\''+z.id+'\',\'eigen_klant_ok\','+(!ekOk)+')')}" >
+            <div class="vinkje-box">${ekOk?'✓':''}</div>
+            <span class="vinkje-label">${ekOk?'Gereed':'Open'}</span>
+          </div>
+        </div>
+        <div>
+          <div class="status-label">Wederpartij WWFT</div>
+          <div class="vinkje-wrap${wpOk?' aan':''}${roLabel}" onclick="${readOnly?'':('zetOtdVinkje(\''+z.id+'\',\'wederpartij_ok\','+(!wpOk)+')')}" >
+            <div class="vinkje-box">${wpOk?'✓':''}</div>
+            <span class="vinkje-label">${wpOk?'Gereed':'Open'}</span>
+          </div>
+        </div>
+      </div>
+      ${z.wwft_notitie || !readOnly ? `
+      <div class="notitie-blok">
+        <div class="status-label">Notitie</div>
+        ${readOnly
+          ? `<div class="notitie-waarde${!z.wwft_notitie?' leeg-notitie':''}">${esc(z.wwft_notitie||'Geen notitie')}</div>`
+          : `<textarea class="notitie" rows="2" placeholder="Bijv. wederpartij makelaar gecontacteerd…" onchange="zetOtdNotitie('${z.id}',this.value)">${esc(z.wwft_notitie||'')}</textarea>`
+        }
+      </div>` : ''}
+    </div>`;
+  }
+  if(el) el.innerHTML = html;
+}
+
+async function zetOtdVinkje(id, veld, waarde){
+  const z = otdZaken.find(x=>x.id===id);
+  if(!z) return;
+  const oud = z[veld];
+  z[veld] = waarde;
+  renderOtd();
+  try{
+    await api({action:'otd_vinkje', id, veld, waarde});
+    toast('Opgeslagen');
+  }catch(e){
+    z[veld] = oud;
+    renderOtd();
+    toast('Opslaan mislukt: '+e.message, true);
+  }
+}
+
+async function zetOtdNotitie(id, waarde){
+  const z = otdZaken.find(x=>x.id===id);
+  if(!z) return;
+  const oud = z.wwft_notitie || '';
+  if(waarde === oud) return;
+  z.wwft_notitie = waarde;
+  try{
+    await api({action:'otd_notitie', id, waarde});
+    toast('Notitie opgeslagen');
+  }catch(e){
+    z.wwft_notitie = oud;
+    renderOtd();
     toast('Opslaan mislukt: '+e.message, true);
   }
 }
