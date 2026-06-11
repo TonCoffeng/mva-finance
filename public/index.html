@@ -146,7 +146,10 @@
     <span><span class="dot" style="background:var(--c-blanco)"></span>Blanco — nog niet gestart</span>
   </div>
 
-  <div class="filterbar" id="filterbar"></div>
+  <div style="display:flex;align-items:center;gap:.5rem;margin-bottom:18px;flex-wrap:wrap">
+    <div class="filterbar" id="filterbar" style="margin-bottom:0;flex:1"></div>
+    <button id="otd-knop" style="font-family:inherit;font-size:13px;font-weight:600;border:1.5px solid var(--navy);background:var(--navy);color:#fff;border-radius:20px;padding:7px 14px;cursor:pointer;white-space:nowrap;display:flex;align-items:center;gap:7px" onclick="toggleOtd()">✦ OTD-zaken <span id="otd-knop-tel" style="font-size:11px;font-weight:700;background:rgba(255,255,255,.22);padding:1px 7px;border-radius:10px">0</span></button>
+  </div>
 
   <div class="makelaarbar" id="makelaarbar" style="display:none"></div>
 
@@ -297,16 +300,16 @@ function render(){
     ['oranje','Weigert','var(--c-oranje)'],
     ['blanco','Nog niet gestart','var(--c-blanco)'],
   ];
-  const otdAct = toonOtd ? ' actief' : '';
-  const otdKnop = `<button id="otd-knop" class="${otdAct.trim()}" style="margin-left:auto">✦ OTD-zaken<span class="telw">${otdZaken.length}</span></button>`;
   document.getElementById('filterbar').innerHTML = fknoppen.map(b=>{
     const act = filter===b[0] ? ' actief' : '';
     const dot = b[2] ? `<span style="width:9px;height:9px;border-radius:3px;display:inline-block;background:${b[2]}"></span>` : '';
     return `<button class="${act.trim()}" onclick="setFilter('${b[0]}')">${dot}${b[1]}<span class="telw">${telling[b[0]]}</span></button>`;
-  }).join('') + otdKnop;
-  // event listener opnieuw koppelen na innerHTML-herschrijving
+  }).join('');
+  // OTD-knop teller updaten (knop zit buiten filterbar, wordt niet herschreven)
+  const otdTel = document.getElementById('otd-knop-tel');
+  if(otdTel) otdTel.textContent = otdZaken.length;
   const otdKnopEl = document.getElementById('otd-knop');
-  if(otdKnopEl) otdKnopEl.addEventListener('click', toggleOtd);
+  if(otdKnopEl) otdKnopEl.style.opacity = toonOtd ? '1' : '0.75';
 
   // OTD-sectie tonen of verbergen
   const otdSectie = document.getElementById('otd-sectie');
