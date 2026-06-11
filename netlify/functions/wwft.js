@@ -125,8 +125,9 @@ exports.handler = async (event) => {
 
       // OTD-zaken: automatisch aangemaakt door de Signhost-webhook bij ondertekening.
       let otdPath =
-        'wwft_zaken?select=id,bron,otd_dossier_id,object_adres,documenttype,makelaar_email,makelaar_naam,' +
-        'opdrachtgevers,aantal_personen,status,wwft_notitie,doorbelast,ondertekend_op,toegewezen_aan' +
+        'wwft_zaken?select=id,bron,otd_dossier_id,factuur_id,object_adres,documenttype,makelaar_email,makelaar_naam,' +
+        'opdrachtgevers,aantal_personen,status,wwft_notitie,doorbelast,ondertekend_op,toegewezen_aan,' +
+        'otd_aanwezig,otd_ontbreekt,eigen_klant_ok,wederpartij_ok' +
         '&order=ondertekend_op.desc.nullslast';
       if (!volledigeToegang) {
         otdPath += `&makelaar_email=eq.${encodeURIComponent(gebruiker.email || '')}`;
@@ -195,6 +196,19 @@ exports.handler = async (event) => {
       const resultaat = await sb.patch(
         `wwft_zaken?id=eq.${encodeURIComponent(id)}`,
         { wwft_notitie: notitie, bijgewerkt_op: new Date().toISOString() }
+      );
+      return { statusCode: 200, headers, body: JSON.stringify({ ok: true, zaak: resultaat[0] }) };
+    }
+
+    if (action === 'otd_aanwezig') {
+      if (!volledigeToegang) {
+        return { statusCode: 403, headers, body: JSON.stringify({ error: 'Alleen directie en compliance kunnen dit vinkje zetten' }) };
+      }
+      const { id, waarde } = payload;
+      if (!id) return { statusCode: 400, headers, body: JSON.stringify({ error: 'id vereist' }) };
+      const resultaat = await sb.patch(
+        `wwft_zaken?id=eq.${encodeURIComponent(id)}`,
+        { otd_aanwezig: waarde === true || waarde === 'true', bijgewerkt_op: new Date().toISOString() }
       );
       return { statusCode: 200, headers, body: JSON.stringify({ ok: true, zaak: resultaat[0] }) };
     }
