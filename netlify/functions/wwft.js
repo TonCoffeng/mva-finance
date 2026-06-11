@@ -199,6 +199,21 @@ exports.handler = async (event) => {
       return { statusCode: 200, headers, body: JSON.stringify({ ok: true, zaak: resultaat[0] }) };
     }
 
+    if (action === 'otd_vinkje') {
+      if (!volledigeToegang) {
+        return { statusCode: 403, headers, body: JSON.stringify({ error: 'Alleen directie en compliance kunnen vinkjes zetten' }) };
+      }
+      const { id, veld, waarde } = payload;
+      const TOEGESTANE_VINKJES = ['eigen_klant_ok', 'wederpartij_ok'];
+      if (!id) return { statusCode: 400, headers, body: JSON.stringify({ error: 'id vereist' }) };
+      if (!TOEGESTANE_VINKJES.includes(veld)) return { statusCode: 400, headers, body: JSON.stringify({ error: `Ongeldig veld: ${veld}` }) };
+      const resultaat = await sb.patch(
+        `wwft_zaken?id=eq.${encodeURIComponent(id)}`,
+        { [veld]: !!waarde, bijgewerkt_op: new Date().toISOString() }
+      );
+      return { statusCode: 200, headers, body: JSON.stringify({ ok: true, zaak: resultaat[0] }) };
+    }
+
     if (action === 'otd_doorbelast') {
       if (!volledigeToegang) {
         return { statusCode: 403, headers, body: JSON.stringify({ error: 'Alleen directie en compliance kunnen doorbelasting afvinken' }) };
