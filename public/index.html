@@ -298,12 +298,15 @@ function render(){
     ['blanco','Nog niet gestart','var(--c-blanco)'],
   ];
   const otdAct = toonOtd ? ' actief' : '';
-  const otdKnop = `<button class="${otdAct.trim()}" onclick="toggleOtd()" style="margin-left:auto">✦ OTD-zaken<span class="telw">${otdZaken.length}</span></button>`;
+  const otdKnop = `<button id="otd-knop" class="${otdAct.trim()}" style="margin-left:auto">✦ OTD-zaken<span class="telw">${otdZaken.length}</span></button>`;
   document.getElementById('filterbar').innerHTML = fknoppen.map(b=>{
     const act = filter===b[0] ? ' actief' : '';
     const dot = b[2] ? `<span style="width:9px;height:9px;border-radius:3px;display:inline-block;background:${b[2]}"></span>` : '';
     return `<button class="${act.trim()}" onclick="setFilter('${b[0]}')">${dot}${b[1]}<span class="telw">${telling[b[0]]}</span></button>`;
   }).join('') + otdKnop;
+  // event listener opnieuw koppelen na innerHTML-herschrijving
+  const otdKnopEl = document.getElementById('otd-knop');
+  if(otdKnopEl) otdKnopEl.addEventListener('click', toggleOtd);
 
   // OTD-sectie tonen of verbergen
   const otdSectie = document.getElementById('otd-sectie');
