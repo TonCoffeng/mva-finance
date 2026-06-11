@@ -55,7 +55,7 @@ async function verifieerGebruiker(token) {
   if (!r.ok) return null;
   const user = await r.json();
   if (!user || !user.id) return null;
-  const rows = await sb.get(`gebruikers?select=id,rol,actief&auth_uuid=eq.${user.id}&limit=1`);
+  const rows = await sb.get(`gebruikers?select=id,rol,actief,email&auth_uuid=eq.${user.id}&limit=1`);
   const g = rows && rows[0];
   if (!g || g.actief === false) return null;
   return g;
@@ -123,7 +123,18 @@ exports.handler = async (event) => {
         for (const r of rows) r.makelaar_naam = naamVan[r.makelaar_id] || null;
       }
 
-      return { statusCode: 200, headers, body: JSON.stringify({ ok: true, zaken: rows, readonly: !volledigeToegang }) };
+      // OTD-zaken: automatisch aangemaakt door de Signhost-webhook bij ondertekening.
+      let otdPath =
+        'wwft_zaken?select=id,bron,otd_dossier_id,object_adres,documenttype,makelaar_email,makelaar_naam,' +
+        'opdrachtgevers,aantal_personen,status,wwft_notitie,doorbelast,ondertekend_op' +
+        '&order=ondertekend_op.desc.nullslast';
+      if (!volledigeToegang) {
+        otdPath += `&makelaar_email=eq.${encodeURIComponent(gebruiker.email || '')}`;
+      }
+      let otdZaken = [];
+      try { otdZaken = await sb.get(otdPath); } catch (e) { otdZaken = []; }
+
+      return { statusCode: 200, headers, body: JSON.stringify({ ok: true, zaken: rows, otd_zaken: otdZaken, readonly: !volledigeToegang }) };
     }
 
     if (action === 'status') {
@@ -155,6 +166,48 @@ exports.handler = async (event) => {
       const resultaat = await sb.patch(
         `facturen?factuurnummer=eq.${encodeURIComponent(factuurnummer)}&wwft_actueel=eq.true`,
         data
+      );
+      return { statusCode: 200, headers, body: JSON.stringify({ ok: true, zaak: resultaat[0] }) };
+    }
+
+    if (action === 'otd_status') {
+      if (!volledigeToegang) {
+        return { statusCode: 403, headers, body: JSON.stringify({ error: 'Alleen directie en compliance kunnen de status wijzigen' }) };
+      }
+      const { id, waarde } = payload;
+      const OTD_STATUSSEN = ['te_starten', 'gestart', 'afgerond'];
+      if (!id) return { statusCode: 400, headers, body: JSON.stringify({ error: 'id vereist' }) };
+      if (!OTD_STATUSSEN.includes(waarde)) return { statusCode: 400, headers, body: JSON.stringify({ error: `Ongeldige waarde: ${waarde}` }) };
+      const resultaat = await sb.patch(
+        `wwft_zaken?id=eq.${encodeURIComponent(id)}`,
+        { status: waarde, bijgewerkt_op: new Date().toISOString() }
+      );
+      return { statusCode: 200, headers, body: JSON.stringify({ ok: true, zaak: resultaat[0] }) };
+    }
+
+    if (action === 'otd_notitie') {
+      if (!volledigeToegang) {
+        return { statusCode: 403, headers, body: JSON.stringify({ error: 'Alleen directie en compliance kunnen de notitie wijzigen' }) };
+      }
+      const { id } = payload;
+      if (!id) return { statusCode: 400, headers, body: JSON.stringify({ error: 'id vereist' }) };
+      const notitie = (payload.waarde == null ? '' : String(payload.waarde)).slice(0, 2000);
+      const resultaat = await sb.patch(
+        `wwft_zaken?id=eq.${encodeURIComponent(id)}`,
+        { wwft_notitie: notitie, bijgewerkt_op: new Date().toISOString() }
+      );
+      return { statusCode: 200, headers, body: JSON.stringify({ ok: true, zaak: resultaat[0] }) };
+    }
+
+    if (action === 'otd_doorbelast') {
+      if (!volledigeToegang) {
+        return { statusCode: 403, headers, body: JSON.stringify({ error: 'Alleen directie en compliance kunnen doorbelasting afvinken' }) };
+      }
+      const { id, waarde } = payload;
+      if (!id) return { statusCode: 400, headers, body: JSON.stringify({ error: 'id vereist' }) };
+      const resultaat = await sb.patch(
+        `wwft_zaken?id=eq.${encodeURIComponent(id)}`,
+        { doorbelast: !!waarde, bijgewerkt_op: new Date().toISOString() }
       );
       return { statusCode: 200, headers, body: JSON.stringify({ ok: true, zaak: resultaat[0] }) };
     }
