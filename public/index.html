@@ -154,9 +154,11 @@
     <div class="laden">Laden…</div>
   </div>
 
-  <div class="sectie-kop">Directiecontrole — OTD-zaken <span id="otd-telling"></span></div>
-  <div class="lijst" id="otd-lijst">
-    <div class="laden">Laden…</div>
+  <div id="otd-sectie" style="display:none">
+    <div class="sectie-kop">Directiecontrole — OTD-zaken <span id="otd-telling"></span></div>
+    <div class="lijst" id="otd-lijst">
+      <div class="laden">Laden…</div>
+    </div>
   </div>
 
   <div class="footer"><b>MvA Intelligence</b> · Finance · WWFT-module · 2026</div>
@@ -174,6 +176,9 @@ let otdZaken = [];
 let readOnly = false;
 let filter = 'alle';
 let makelaarFilter = 'alle';
+let toonOtd = false;
+
+function toggleOtd(){ toonOtd = !toonOtd; render(); renderOtd(); }
 
 function esc(s){ return String(s==null?'':s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])); }
 function euro(n){ return n==null ? '—' : '€ ' + Number(n).toLocaleString('nl-NL',{minimumFractionDigits:2,maximumFractionDigits:2}); }
@@ -292,11 +297,17 @@ function render(){
     ['oranje','Weigert','var(--c-oranje)'],
     ['blanco','Nog niet gestart','var(--c-blanco)'],
   ];
+  const otdAct = toonOtd ? ' actief' : '';
+  const otdKnop = `<button class="${otdAct.trim()}" onclick="toggleOtd()" style="margin-left:auto">✦ OTD-zaken<span class="telw">${otdZaken.length}</span></button>`;
   document.getElementById('filterbar').innerHTML = fknoppen.map(b=>{
     const act = filter===b[0] ? ' actief' : '';
     const dot = b[2] ? `<span style="width:9px;height:9px;border-radius:3px;display:inline-block;background:${b[2]}"></span>` : '';
     return `<button class="${act.trim()}" onclick="setFilter('${b[0]}')">${dot}${b[1]}<span class="telw">${telling[b[0]]}</span></button>`;
-  }).join('');
+  }).join('') + otdKnop;
+
+  // OTD-sectie tonen of verbergen
+  const otdSectie = document.getElementById('otd-sectie');
+  if(otdSectie) otdSectie.style.display = toonOtd ? 'block' : 'none';
 
   const mbar = document.getElementById('makelaarbar');
   if(!readOnly){
