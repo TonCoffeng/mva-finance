@@ -181,7 +181,14 @@ let filter = 'alle';
 let makelaarFilter = 'alle';
 let toonOtd = false;
 
-function toggleOtd(){ toonOtd = !toonOtd; render(); renderOtd(); }
+function toggleOtd(){
+  toonOtd = !toonOtd;
+  render();
+  renderOtd();
+  if(toonOtd){
+    setTimeout(()=>{ document.getElementById('otd-sectie').scrollIntoView({behavior:'smooth', block:'start'}); }, 50);
+  }
+}
 
 function esc(s){ return String(s==null?'':s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])); }
 function euro(n){ return n==null ? '—' : '€ ' + Number(n).toLocaleString('nl-NL',{minimumFractionDigits:2,maximumFractionDigits:2}); }
