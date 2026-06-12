@@ -4,3 +4,11 @@
 
 [functions]
   node_bundler = "esbuild"
+
+# HTML-bestanden nooit cachen — altijd verse versie ophalen
+[[headers]]
+  for = "/*.html"
+  [headers.values]
+    Cache-Control = "no-cache, no-store, must-revalidate"
+    Pragma = "no-cache"
+    Expires = "0"
