@@ -1,0 +1,487 @@
+<!DOCTYPE html>
+<html lang="nl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>MvA Finance · WWFT-controle</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:opsz,wght@9..40,400;9..40,500;9..40,600;9..40,700&family=DM+Serif+Display&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --navy:#1A2B5F; --oranje:#E8500A; --zand:#B0ACA2; --rand:#E2DFD8;
+    --tekst:#1A2B5F; --grijs:#6B6760; --bg:#F7F6F3; --wit:#fff;
+    --groen:#15803d; --rood:#991b1b;
+    --c-groen:#1D9E75; --c-groen-bg:#E1F5EE; --c-groen-tx:#0F6E56;
+    --c-oranje:#EF9F27; --c-oranje-bg:#FAEEDA; --c-oranje-tx:#854F0B;
+    --c-rood:#E24B4A; --c-rood-bg:#FCEBEB; --c-rood-tx:#A32D2D;
+    --c-blanco:#B4B2A9; --c-blanco-bg:#F1EFE8; --c-blanco-tx:#5F5E5A;
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--tekst);line-height:1.5}
+  .wrap{max-width:1000px;margin:0 auto;padding:24px 16px 80px}
+
+  /* Login */
+  .login-overlay{position:fixed;inset:0;background:var(--bg);display:flex;align-items:center;justify-content:center;z-index:100;padding:20px}
+  .login-kaart{background:var(--wit);border:1px solid var(--rand);border-radius:14px;padding:32px 28px;max-width:360px;width:100%;text-align:center}
+  .login-kaart .titel{font-family:'DM Serif Display',serif;font-size:26px;color:var(--navy);margin-bottom:6px}
+  .login-kaart .sub{font-size:13px;color:var(--grijs);margin-bottom:22px}
+
+  header{display:flex;align-items:flex-start;justify-content:space-between;gap:16px;margin-bottom:24px;flex-wrap:wrap}
+  .titel-h{font-family:'DM Serif Display',serif;font-size:30px;color:var(--navy);line-height:1.1}
+  .sub{font-size:13px;color:var(--grijs);margin-top:4px}
+  .terug{font-size:13px;color:var(--grijs);text-decoration:none;border:1px solid var(--rand);padding:7px 13px;border-radius:8px;background:var(--wit);white-space:nowrap}
+  .terug:hover{border-color:var(--navy);color:var(--navy)}
+
+  /* Totalen */
+  .totalen{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:12px;margin-bottom:18px}
+  .tot{background:var(--wit);border:1px solid var(--rand);border-radius:12px;padding:16px 18px}
+  .tot.accent{background:var(--navy);border-color:var(--navy)}
+  .tot-label{font-size:11px;text-transform:uppercase;letter-spacing:.06em;color:var(--grijs)}
+  .tot.accent .tot-label{color:rgba(255,255,255,.6)}
+  .tot-getal{font-size:24px;font-weight:700;color:var(--navy);margin-top:4px}
+  .tot.accent .tot-getal{color:#fff}
+  .tot-getal.groen{color:var(--c-groen-tx)}
+  .tot-getal.oranje{color:var(--c-oranje-tx)}
+  .tot-getal.rood{color:var(--c-rood-tx)}
+  .tot-klein{font-size:12px;color:var(--grijs);margin-top:2px}
+
+  /* Filterbar */
+  .filterbar{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:12px}
+  .filterbar button{font-family:inherit;cursor:pointer;font-size:13px;font-weight:600;border:1.5px solid var(--rand);background:var(--wit);color:var(--grijs);border-radius:20px;padding:7px 14px;display:inline-flex;align-items:center;gap:7px;transition:all .15s}
+  .filterbar button:hover{border-color:var(--navy);color:var(--navy)}
+  .filterbar button.actief{border-color:var(--navy);background:var(--navy);color:#fff}
+  .telw{font-size:11px;font-weight:700;background:rgba(26,43,95,.08);color:inherit;padding:1px 7px;border-radius:10px;min-width:20px;text-align:center}
+  .filterbar button.actief .telw{background:rgba(255,255,255,.22)}
+
+  .makelaarbar{display:flex;align-items:center;gap:8px;margin-bottom:16px;flex-wrap:wrap}
+  .makelaarbar label{font-size:12px;text-transform:uppercase;letter-spacing:.05em;color:var(--grijs)}
+  .makelaarbar select{font-family:inherit;font-size:13px;font-weight:600;border:1.5px solid var(--rand);background:var(--wit);color:var(--navy);border-radius:8px;padding:7px 11px;cursor:pointer}
+
+  /* Zaakkaart */
+  .lijst{display:flex;flex-direction:column;gap:10px}
+  .zaak{background:var(--wit);border:1px solid var(--rand);border-left:4px solid var(--c-blanco);border-radius:10px;padding:14px 16px}
+  .zaak-top{display:flex;justify-content:space-between;align-items:flex-start;gap:12px;flex-wrap:wrap}
+  .zaak-naam{font-weight:600;font-size:15px;color:var(--navy)}
+  .zaak-adres{font-size:13px;color:var(--tekst);margin-top:2px}
+  .zaak-meta{font-size:12px;color:var(--grijs);margin-top:2px;display:flex;flex-wrap:wrap;gap:.3rem}
+  .zaak-rechts{text-align:right;flex-shrink:0}
+  .chip{display:inline-block;font-size:12px;font-weight:600;padding:3px 11px;border-radius:20px}
+  .zaak-bedrag{font-size:13px;color:var(--grijs);margin-top:4px}
+  .zaak-datum{font-size:12px;color:var(--zand);margin-top:1px}
+
+  /* Drie kenmerken */
+  .kenmerken{display:flex;gap:8px;margin-top:12px;flex-wrap:wrap}
+  .kenmerk{display:inline-flex;align-items:center;gap:5px;font-size:12px;font-weight:600;border-radius:8px;padding:4px 10px;border:1px solid var(--rand);background:var(--bg)}
+  .kenmerk.ok{background:var(--c-groen-bg);color:var(--c-groen-tx);border-color:#C3E6A3}
+  .kenmerk.nee{background:var(--c-rood-bg);color:var(--c-rood-tx);border-color:#F5C7B4}
+  .kenmerk.wacht{background:var(--c-blanco-bg);color:var(--c-blanco-tx);border-color:var(--rand)}
+
+  /* Monique-acties */
+  .monique-acties{margin-top:14px;border-top:1px solid var(--rand);padding-top:12px;display:flex;flex-direction:column;gap:10px}
+  .acties-rij{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
+  .lbl{font-size:11px;text-transform:uppercase;letter-spacing:.05em;color:var(--grijs);margin-bottom:3px}
+
+  /* Override vinkjes */
+  .vinkjes{display:grid;grid-template-columns:repeat(3,auto);gap:6px 14px;align-items:center}
+  .vinkje-lbl{font-size:12px;color:var(--grijs)}
+  .vinkje-toggle{width:16px;height:16px;accent-color:var(--navy);cursor:pointer}
+  .vinkje-toggle:disabled{opacity:.4;cursor:default}
+
+  /* Notitie */
+  textarea.notitie{font-family:inherit;font-size:13px;border:1.5px solid var(--rand);border-radius:7px;padding:7px 9px;outline:none;width:100%;background:#fff;color:var(--tekst);resize:vertical;min-height:36px;line-height:1.45}
+  textarea.notitie:focus{border-color:var(--navy)}
+
+  /* Mail sturen */
+  .mail-blok{display:none;background:#f8f6f2;border:1px solid var(--rand);border-radius:8px;padding:10px 12px;margin-top:8px}
+  .mail-blok.open{display:block}
+  .mail-blok textarea{font-family:inherit;font-size:13px;border:1.5px solid var(--rand);border-radius:7px;padding:7px 9px;width:100%;resize:vertical;min-height:72px;outline:none;margin-bottom:8px}
+  .mail-blok textarea:focus{border-color:var(--navy)}
+
+  /* Knoppen */
+  .btn{font-family:inherit;font-size:12px;font-weight:600;border-radius:8px;padding:6px 12px;cursor:pointer;border:none;transition:all .15s;display:inline-flex;align-items:center;gap:5px}
+  .btn-navy{background:var(--navy);color:#fff}
+  .btn-navy:hover{filter:brightness(1.15)}
+  .btn-navy:disabled{background:var(--zand);cursor:default}
+  .btn-outline{background:#fff;color:var(--navy);border:1.5px solid var(--rand)}
+  .btn-outline:hover{border-color:var(--navy)}
+  .btn-groen{background:var(--c-groen);color:#fff}
+  .btn-groen:hover{filter:brightness(1.1)}
+  .btn-rood{background:var(--c-rood);color:#fff}
+
+  /* Bewijs links */
+  .bewijs-lijst{display:flex;flex-wrap:wrap;gap:6px;margin-top:6px}
+  .bewijs-chip{display:inline-flex;align-items:center;gap:4px;font-size:12px;color:var(--navy);background:#f0eee8;border:1px solid var(--rand);border-radius:6px;padding:3px 8px;text-decoration:none}
+  .bewijs-chip:hover{border-color:var(--navy)}
+
+  /* Slot badge */
+  .slot-badge{display:inline-flex;align-items:center;gap:4px;font-size:11px;font-weight:600;background:#E3ECFA;color:var(--navy);border-radius:6px;padding:2px 8px;margin-left:6px}
+
+  .leeg,.laden{text-align:center;padding:40px;color:var(--grijs);font-size:14px;background:var(--wit);border:1px solid var(--rand);border-radius:12px}
+  .toast{position:fixed;bottom:24px;left:50%;transform:translateX(-50%);background:var(--navy);color:#fff;padding:11px 20px;border-radius:10px;font-size:14px;box-shadow:0 8px 24px rgba(0,0,0,.18);opacity:0;transition:opacity .25s,transform .25s;pointer-events:none;z-index:50}
+  .toast.show{opacity:1;transform:translateX(-50%) translateY(-4px)}
+  .toast.fout{background:var(--rood)}
+  .footer{text-align:center;font-size:12px;color:var(--zand);margin-top:32px}
+
+  @media(max-width:640px){
+    .titel-h{font-size:24px}
+    .vinkjes{grid-template-columns:repeat(2,auto)}
+  }
+</style>
+</head>
+<body>
+
+<div class="login-overlay" id="login">
+  <div class="login-kaart">
+    <div class="titel">MvA Finance</div>
+    <div class="sub" id="login-sub">Inloggen&hellip;</div>
+  </div>
+</div>
+
+<div class="wrap" id="app" style="display:none">
+  <header>
+    <div>
+      <div class="titel-h">WWFT-controle</div>
+      <div class="sub" id="hdr-sub">Één overzicht · OTD · WWFT-bewijs · Factuur</div>
+    </div>
+    <a class="terug" href="https://portal.makelaarsvan.nl/">← Terug naar portal</a>
+  </header>
+
+  <div class="totalen" id="totalen"></div>
+
+  <div class="filterbar" id="filterbar"></div>
+  <div class="makelaarbar" id="makelaarbar" style="display:none"></div>
+
+  <div class="lijst" id="lijst"><div class="laden">Laden…</div></div>
+
+  <div class="footer"><b>MvA Intelligence</b> · Finance · WWFT-module v2 · 2026</div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+const API     = '/.netlify/functions/wwft';
+const SB_URL  = 'https://olfcrzusdkijxroxvsgm.supabase.co';
+const SB_KEY  = 'sb_publishable_0OmJOAM_XZWCW8e_vgx2Qg_L3tdRsc4';
+const SB_STORAGE = 'https://olfcrzusdkijxroxvsgm.supabase.co/storage/v1/object/public/wwft-bewijs';
+
+let sbToken   = null;
+let zaken     = [];       // wwft_zaken rijen
+let readOnly  = false;
+let filter    = 'alle';
+let makelaarFilter = 'alle';
+
+// Mail-state per zaak-id
+const mailOpen = {};
+
+function esc(s){ return String(s==null?'':s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])); }
+function euro(n){ return n==null ? '—' : '€ ' + Number(n).toLocaleString('nl-NL',{minimumFractionDigits:2,maximumFractionDigits:2}); }
+function datumNL(s){
+  if(!s) return '—';
+  const d = new Date(s);
+  if(isNaN(d)) return '—';
+  return d.toLocaleDateString('nl-NL',{day:'2-digit',month:'2-digit',year:'numeric'});
+}
+function toast(msg, fout){
+  const t = document.getElementById('toast');
+  t.textContent = msg; t.className = 'toast show'+(fout?' fout':'');
+  setTimeout(()=>{ t.className='toast'; }, 2800);
+}
+function setLoginSub(html){ const el=document.getElementById('login-sub'); if(el) el.innerHTML=html; }
+
+async function api(body){
+  const r = await fetch(API,{method:'POST',headers:{'Content-Type':'application/json','Authorization':'Bearer '+(sbToken||'')},body:JSON.stringify(body)});
+  const j = await r.json();
+  if(!r.ok||j.error) throw new Error(j.error||('HTTP '+r.status));
+  return j;
+}
+
+async function laad(){
+  try{
+    const j = await api({action:'lijst'});
+    // Gebruik otd_zaken als primaire lijst (nieuwe architectuur)
+    zaken = j.otd_zaken || [];
+    readOnly = !!j.readonly;
+    document.getElementById('login').style.display='none';
+    document.getElementById('app').style.display='block';
+    render();
+  }catch(e){
+    setLoginSub(esc(e.message)+' <a href="https://portal.makelaarsvan.nl/" style="color:var(--navy)">Naar de portal</a>.');
+  }
+}
+
+// ── Kleur/status bepalen op basis van drie kenmerken ─────────────────────────
+function zaakStatus(z){
+  const otd = !!z.otd_aanwezig;
+  const wwft = !!z.wwft_uitgevoerd;
+  const fac  = !!z.factuur_id;
+  if(otd && wwft && fac) return 'compleet';
+  if(z.op_slot && (!wwft)) return 'actie';   // factuur binnen maar WWFT mist
+  if(!otd) return 'actie';
+  if(!wwft) return 'wacht';                  // wacht op makelaar
+  return 'wacht';
+}
+
+const statusConf = {
+  compleet: { bar:'var(--c-groen)', bg:'var(--c-groen-bg)', tx:'var(--c-groen-tx)', label:'Compleet' },
+  actie:    { bar:'var(--c-rood)',  bg:'var(--c-rood-bg)',  tx:'var(--c-rood-tx)',  label:'Actie vereist' },
+  wacht:    { bar:'var(--c-oranje)',bg:'var(--c-oranje-bg)',tx:'var(--c-oranje-tx)',label:'Wacht op makelaar' },
+  open:     { bar:'var(--c-blanco)',bg:'var(--c-blanco-bg)',tx:'var(--c-blanco-tx)',label:'Open' },
+};
+
+function kenmerkHtml(ok, label, nvt){
+  const cls = nvt ? 'wacht' : (ok ? 'ok' : 'nee');
+  const icon = nvt ? '⏳' : (ok ? '✓' : '✗');
+  return `<span class="kenmerk ${cls}">${icon} ${label}</span>`;
+}
+
+// ── Render ────────────────────────────────────────────────────────────────────
+function setFilter(f){ filter=(filter===f)?'alle':f; render(); }
+function setMakelaar(v){ makelaarFilter=v; render(); }
+
+function render(){
+  const naMakelaar = zaken.filter(z => {
+    if(makelaarFilter==='alle') return true;
+    return (z.makelaar_email||'')=== makelaarFilter;
+  });
+
+  // Tellingen
+  const tel = {alle:naMakelaar.length,compleet:0,actie:0,wacht:0};
+  for(const z of naMakelaar) tel[zaakStatus(z)]++;
+
+  // Filterknoppen
+  const fknoppen = [
+    ['alle','Alle',null],
+    ['actie','Actie vereist','var(--c-rood)'],
+    ['wacht','Wacht op makelaar','var(--c-oranje)'],
+    ['compleet','Compleet','var(--c-groen)'],
+  ];
+  document.getElementById('filterbar').innerHTML = fknoppen.map(b=>{
+    const act = filter===b[0]?' actief':'';
+    const dot = b[2] ? `<span style="width:9px;height:9px;border-radius:3px;display:inline-block;background:${b[2]}"></span>` : '';
+    return `<button class="${act.trim()}" onclick="setFilter('${b[0]}')">${dot}${b[1]}<span class="telw">${tel[b[0]]}</span></button>`;
+  }).join('');
+
+  // Makelaarfilter (alleen volledig toegang)
+  const mbar = document.getElementById('makelaarbar');
+  if(!readOnly){
+    const perMak = new Map();
+    for(const z of zaken){
+      const email = z.makelaar_email||'';
+      const naam  = z.makelaar_naam||z.makelaar_email||'Onbekend';
+      if(!perMak.has(email)) perMak.set(email,{naam,n:0});
+      perMak.get(email).n++;
+    }
+    const opts = [...perMak.entries()].sort((a,b)=>a[1].naam.localeCompare(b[1].naam,'nl'));
+    let sel = `<option value="alle"${makelaarFilter==='alle'?' selected':''}>Alle makelaars (${zaken.length})</option>`;
+    sel += opts.map(([e,o])=>`<option value="${esc(e)}"${makelaarFilter===e?' selected':''}>${esc(o.naam)} (${o.n})</option>`).join('');
+    mbar.innerHTML = `<label>Makelaar</label><select onchange="setMakelaar(this.value)">${sel}</select>`;
+    mbar.style.display='flex';
+  } else {
+    mbar.style.display='none';
+  }
+
+  // Totalen
+  document.getElementById('totalen').innerHTML = `
+    <div class="tot accent"><div class="tot-label">Totaal open</div><div class="tot-getal">${naMakelaar.filter(z=>z.status!=='afgerond').length}</div><div class="tot-klein">actieve dossiers</div></div>
+    <div class="tot"><div class="tot-label">Actie vereist</div><div class="tot-getal rood">${tel.actie}</div><div class="tot-klein">factuur binnen, iets mist</div></div>
+    <div class="tot"><div class="tot-label">Wacht op makelaar</div><div class="tot-getal oranje">${tel.wacht}</div><div class="tot-klein">WWFT nog niet aangeleverd</div></div>
+    <div class="tot"><div class="tot-label">Compleet</div><div class="tot-getal groen">${tel.compleet}</div><div class="tot-klein">klaar voor archivering</div></div>`;
+
+  // Zaken renderen
+  let html = '';
+  let zichtbaar = 0;
+  const gefilterd = naMakelaar.filter(z => filter==='alle' || zaakStatus(z)===filter);
+  for(const z of gefilterd){
+    zichtbaar++;
+    html += zaakKaart(z);
+  }
+  if(!zaken.length)      html = '<div class="leeg">Geen WWFT-zaken.</div>';
+  else if(!zichtbaar)    html = '<div class="leeg">Geen zaken in dit filter.</div>';
+  document.getElementById('lijst').innerHTML = html;
+}
+
+function zaakKaart(z){
+  const st = zaakStatus(z);
+  const c  = statusConf[st] || statusConf.open;
+  const bronLabel = z.bron==='otd' ? 'OTD' : 'Factuur';
+  const docLabel  = z.documenttype==='aankoop' ? 'Aankoop' : z.documenttype==='verkoop' ? 'Verkoop' : '';
+  const namen = (z.opdrachtgevers||[]).map(o=>o.naam).filter(Boolean).join(', ') || '—';
+
+  // Drie kenmerken
+  const kenmerken = `
+    <div class="kenmerken">
+      ${kenmerkHtml(!!z.otd_aanwezig, 'OTD')}
+      ${kenmerkHtml(!!z.wwft_uitgevoerd, 'WWFT-controle')}
+      ${kenmerkHtml(!!z.factuur_id, 'Factuur', !z.factuur_id && !z.op_slot)}
+    </div>`;
+
+  // Bewijs-uploads
+  const urls = z.wwft_bewijs_urls||[];
+  const bewijsHtml = urls.length ? `
+    <div style="margin-top:8px">
+      <div class="lbl">Bewijs makelaar</div>
+      <div class="bewijs-lijst">${urls.map(pad=>{
+        const naam = pad.split('/').pop().replace(/^\d+_/,'');
+        return `<a class="bewijs-chip" href="${SB_STORAGE}/${encodeURIComponent(pad)}" target="_blank">📎 ${esc(naam)}</a>`;
+      }).join('')}</div>
+    </div>` : '';
+
+  // Slot-badge
+  const slotBadge = z.op_slot ? `<span class="slot-badge">🔒 Op slot</span>` : '';
+
+  // Monique-acties (alleen volledige toegang)
+  let moniqueHtml = '';
+  if(!readOnly){
+    const mailBtnLabel = mailOpen[z.id] ? 'Annuleer' : '✉ Mail sturen';
+    const mailBlokHtml = `
+      <div class="mail-blok${mailOpen[z.id]?' open':''}" id="mail-blok-${z.id}">
+        <div class="lbl" style="margin-bottom:6px">Mail naar ${esc(z.makelaar_naam||z.makelaar_email||'makelaar')}</div>
+        <textarea id="mail-tekst-${z.id}" placeholder="Typ je bericht…"></textarea>
+        <button class="btn btn-navy" onclick="verstuurMail('${z.id}')">Versturen</button>
+        ${z.mail_verstuurd_op ? `<span style="font-size:11px;color:var(--grijs);margin-left:8px">Laatste mail: ${datumNL(z.mail_verstuurd_op)}</span>` : ''}
+      </div>`;
+
+    moniqueHtml = `
+      <div class="monique-acties">
+        <div>
+          <div class="lbl">Override vinkjes (Monique)</div>
+          <div class="vinkjes">
+            <input class="vinkje-toggle" type="checkbox" id="ov-otd-${z.id}" ${z.otd_aanwezig?'checked':''} onchange="override('${z.id}','otd_aanwezig',this.checked)">
+            <label class="vinkje-lbl" for="ov-otd-${z.id}">OTD aanwezig</label>
+            <input class="vinkje-toggle" type="checkbox" id="ov-wwft-${z.id}" ${z.wwft_uitgevoerd?'checked':''} onchange="override('${z.id}','wwft_uitgevoerd',this.checked)">
+            <label class="vinkje-lbl" for="ov-wwft-${z.id}">WWFT uitgevoerd</label>
+          </div>
+        </div>
+        <div>
+          <div class="lbl">Notitie (intern)</div>
+          <textarea class="notitie" rows="2" placeholder="Interne opmerking…" onchange="slaNotitieOp('${z.id}',this.value)">${esc(z.directie_notitie||'')}</textarea>
+        </div>
+        <div class="acties-rij">
+          <button class="btn btn-outline" onclick="toggleMail('${z.id}')">${mailBtnLabel}</button>
+          ${st==='compleet' ? `<button class="btn btn-groen" onclick="archiveer('${z.id}')">✓ Archiveren</button>` : ''}
+        </div>
+        ${mailBlokHtml}
+      </div>`;
+  }
+
+  return `<div class="zaak" id="zaak-${z.id}" style="border-left-color:${c.bar}">
+    <div class="zaak-top">
+      <div style="min-width:0;flex:1">
+        <div class="zaak-naam">${esc(z.object_adres||(z.documenttype==='aankoop'?'Aankoopbegeleiding':'—'))}${slotBadge}</div>
+        <div class="zaak-adres">${esc(namen)}</div>
+        <div class="zaak-meta">
+          <span>${bronLabel}</span>${docLabel?`<span>·</span><span>${docLabel}</span>`:''}
+          <span>·</span><span>${esc(z.makelaar_naam||z.makelaar_email||'—')}</span>
+          <span>·</span><span>${datumNL(z.ondertekend_op)}</span>
+        </div>
+      </div>
+      <div class="zaak-rechts">
+        <span class="chip" style="background:${c.bg};color:${c.tx}">${c.label}</span>
+      </div>
+    </div>
+    ${kenmerken}
+    ${bewijsHtml}
+    ${moniqueHtml}
+  </div>`;
+}
+
+// ── Acties ────────────────────────────────────────────────────────────────────
+async function override(id, veld, waarde){
+  const z = zaken.find(x=>x.id===id);
+  const oud = z && z[veld];
+  if(z) z[veld] = waarde;
+  try{
+    await api({action:'override', id, veld, waarde});
+    toast('Opgeslagen');
+    render();
+  }catch(e){
+    if(z) z[veld] = oud;
+    render();
+    toast('Mislukt: '+e.message, true);
+  }
+}
+
+async function slaNotitieOp(id, waarde){
+  const z = zaken.find(x=>x.id===id);
+  const oud = z && z.directie_notitie;
+  if(waarde===(oud||'')) return;
+  if(z) z.directie_notitie = waarde;
+  try{
+    await api({action:'directie_notitie', id, waarde});
+    toast('Notitie opgeslagen');
+  }catch(e){
+    if(z) z.directie_notitie = oud;
+    render();
+    toast('Mislukt: '+e.message, true);
+  }
+}
+
+function toggleMail(id){
+  mailOpen[id] = !mailOpen[id];
+  render();
+}
+
+async function verstuurMail(id){
+  const z = zaken.find(x=>x.id===id);
+  if(!z) return;
+  const tekst = (document.getElementById('mail-tekst-'+id)||{}).value||'';
+  if(!tekst.trim()){ toast('Typ eerst een bericht', true); return; }
+  try{
+    await api({
+      action:'mail_makelaar',
+      id,
+      makelaar_email: z.makelaar_email,
+      makelaar_naam:  z.makelaar_naam,
+      object_adres:   z.object_adres,
+      bericht: tekst,
+    });
+    z.mail_verstuurd_op = new Date().toISOString();
+    mailOpen[id] = false;
+    render();
+    toast('Mail verstuurd ✓');
+  }catch(e){
+    toast('Mail mislukt: '+e.message, true);
+  }
+}
+
+async function archiveer(id){
+  if(!confirm('Zaak archiveren? Dit kan niet ongedaan worden.')) return;
+  try{
+    await api({action:'archiveer', id});
+    zaken = zaken.filter(z=>z.id!==id);
+    render();
+    toast('Gearchiveerd ✓');
+  }catch(e){
+    toast('Mislukt: '+e.message, true);
+  }
+}
+
+// ── Init/Login ─────────────────────────────────────────────────────────────────
+(async function(){
+  if(!location.hostname.endsWith('makelaarsvan.nl')){
+    setLoginSub('Open via <a href="https://finance.makelaarsvan.nl/" style="color:var(--navy)">finance.makelaarsvan.nl</a>.');
+    return;
+  }
+  try{
+    const { createBrowserClient } = await import('https://esm.sh/@supabase/ssr@0.5.2');
+    const sb = createBrowserClient(SB_URL, SB_KEY, {cookieOptions:{domain:'.makelaarsvan.nl',path:'/',sameSite:'lax',secure:true,maxAge:60*60*24*30}});
+    const { data:{ session } } = await sb.auth.getSession();
+    if(!session||!session.user){
+      if(sessionStorage.getItem('mva_sso_redirect')!=='1'){
+        sessionStorage.setItem('mva_sso_redirect','1');
+        location.href='https://portal.makelaarsvan.nl/';
+      } else {
+        setLoginSub('Niet ingelogd. <a href="https://portal.makelaarsvan.nl/" style="color:var(--navy)">Log in via de portal</a>.');
+      }
+      return;
+    }
+    sessionStorage.removeItem('mva_sso_redirect');
+    sbToken = session.access_token;
+    laad();
+  }catch(e){
+    setLoginSub('Kon de inlogservice niet laden. Ververs de pagina.');
+  }
+})();
+</script>
+</body>
+</html>
