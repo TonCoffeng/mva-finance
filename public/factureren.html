@@ -1,0 +1,477 @@
+<!DOCTYPE html>
+<html lang="nl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>MvA Finance · Factureren</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:opsz,wght@9..40,400;9..40,500;9..40,600;9..40,700&family=DM+Serif+Display&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --navy:#1A2B5F; --oranje:#E8500A; --zand:#B0ACA2; --rand:#E2DFD8;
+    --tekst:#1A2B5F; --grijs:#6B6760; --bg:#F7F6F3; --wit:#fff;
+    --groen:#15803d; --rood:#991b1b;
+    --c-groen:#1D9E75; --c-groen-bg:#E1F5EE; --c-groen-tx:#0F6E56;
+    --c-oranje:#EF9F27; --c-oranje-bg:#FAEEDA; --c-oranje-tx:#854F0B;
+    --c-rood:#E24B4A; --c-rood-bg:#FCEBEB; --c-rood-tx:#A32D2D;
+    --c-blanco:#B4B2A9; --c-blanco-bg:#F1EFE8; --c-blanco-tx:#5F5E5A;
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--tekst);line-height:1.5}
+  .wrap{max-width:1000px;margin:0 auto;padding:24px 16px 80px}
+
+  /* Login */
+  .login-overlay{position:fixed;inset:0;background:var(--bg);display:flex;align-items:center;justify-content:center;z-index:100;padding:20px}
+  .login-kaart{background:var(--wit);border:1px solid var(--rand);border-radius:14px;padding:32px 28px;max-width:360px;width:100%;text-align:center}
+  .login-kaart .titel{font-family:'DM Serif Display',serif;font-size:26px;color:var(--navy);margin-bottom:6px}
+  .login-kaart .sub{font-size:13px;color:var(--grijs);margin-bottom:22px}
+
+  header{display:flex;align-items:flex-start;justify-content:space-between;gap:16px;margin-bottom:24px;flex-wrap:wrap}
+  .titel-h{font-family:'DM Serif Display',serif;font-size:30px;color:var(--navy);line-height:1.1}
+  .sub{font-size:13px;color:var(--grijs);margin-top:4px}
+  .terug{font-size:13px;color:var(--grijs);text-decoration:none;border:1px solid var(--rand);padding:7px 13px;border-radius:8px;background:var(--wit);white-space:nowrap}
+  .terug:hover{border-color:var(--navy);color:var(--navy)}
+
+  .kaart{background:var(--wit);border:1px solid var(--rand);border-radius:12px;padding:20px;margin-bottom:18px}
+  .kaart h2{font-family:'DM Serif Display',serif;font-size:20px;color:var(--navy);margin-bottom:14px;font-weight:400}
+
+  /* Formulier */
+  .veld-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:12px 16px}
+  .veld{display:flex;flex-direction:column;gap:4px}
+  .veld.vol{grid-column:1 / -1}
+  .veld label{font-size:11px;text-transform:uppercase;letter-spacing:.05em;color:var(--grijs)}
+  .veld input,.veld select,.veld textarea{font-family:inherit;font-size:14px;border:1.5px solid var(--rand);border-radius:8px;padding:8px 10px;outline:none;background:#fff;color:var(--tekst);width:100%}
+  .veld input:focus,.veld select:focus,.veld textarea:focus{border-color:var(--navy)}
+
+  /* Regels */
+  .regels{margin-top:18px}
+  .regels-kop,.regel{display:grid;grid-template-columns:1fr 64px 110px 70px 110px 32px;gap:8px;align-items:center}
+  .regels-kop{font-size:11px;text-transform:uppercase;letter-spacing:.04em;color:var(--grijs);padding:0 2px 6px}
+  .regel{padding:6px 0;border-top:1px solid var(--rand)}
+  .regel input{font-family:inherit;font-size:13px;border:1.5px solid var(--rand);border-radius:7px;padding:6px 8px;outline:none;width:100%;background:#fff;color:var(--tekst)}
+  .regel input:focus{border-color:var(--navy)}
+  .regel .reg-tot{font-size:13px;font-weight:600;text-align:right;color:var(--navy)}
+  .regel .verwijder{background:none;border:none;color:var(--c-rood);font-size:16px;cursor:pointer;line-height:1}
+  .regel.courtage input.oms{font-weight:600}
+  .toevoeg-rij{display:flex;gap:8px;flex-wrap:wrap;margin-top:12px;align-items:center}
+  .prodkies{font-family:inherit;font-size:13px;border:1.5px solid var(--rand);border-radius:8px;padding:7px 10px;background:#fff;color:var(--navy);max-width:340px}
+
+  /* Totalen */
+  .tot-blok{margin-top:16px;border-top:2px solid var(--rand);padding-top:12px;display:flex;flex-direction:column;gap:4px;align-items:flex-end}
+  .tot-rij{display:flex;gap:24px;font-size:14px;color:var(--grijs)}
+  .tot-rij .bedrag{min-width:120px;text-align:right;color:var(--tekst);font-weight:500}
+  .tot-rij.incl{font-size:18px;font-weight:700;color:var(--navy);margin-top:4px}
+  .tot-rij.incl .bedrag{color:var(--navy)}
+
+  .acties{display:flex;gap:10px;flex-wrap:wrap;margin-top:18px;align-items:center}
+  .info-regel{font-size:12px;color:var(--grijs);margin-top:10px}
+
+  /* Knoppen */
+  .btn{font-family:inherit;font-size:13px;font-weight:600;border-radius:8px;padding:9px 16px;cursor:pointer;border:none;transition:all .15s;display:inline-flex;align-items:center;gap:6px}
+  .btn-navy{background:var(--navy);color:#fff}
+  .btn-navy:hover{filter:brightness(1.15)}
+  .btn-navy:disabled{background:var(--zand);cursor:default}
+  .btn-outline{background:#fff;color:var(--navy);border:1.5px solid var(--rand)}
+  .btn-outline:hover{border-color:var(--navy)}
+  .btn-groen{background:var(--c-groen);color:#fff}
+  .btn-groen:hover{filter:brightness(1.1)}
+  .btn-klein{font-size:12px;padding:5px 11px}
+
+  /* Lijst */
+  .flijst{display:flex;flex-direction:column;gap:8px}
+  .frij{display:flex;justify-content:space-between;align-items:center;gap:12px;background:var(--wit);border:1px solid var(--rand);border-left:4px solid var(--c-blanco);border-radius:9px;padding:11px 14px;flex-wrap:wrap}
+  .frij.concept{border-left-color:var(--c-oranje)}
+  .frij.geaccordeerd{border-left-color:var(--c-groen)}
+  .frij-links{min-width:0;flex:1}
+  .frij-nr{font-weight:600;font-size:14px;color:var(--navy)}
+  .frij-meta{font-size:12px;color:var(--grijs);margin-top:2px}
+  .frij-rechts{display:flex;align-items:center;gap:10px;flex-wrap:wrap}
+  .frij-bedrag{font-size:14px;font-weight:600;color:var(--navy)}
+  .chip{display:inline-block;font-size:11px;font-weight:600;padding:3px 10px;border-radius:20px}
+  .chip.concept{background:var(--c-oranje-bg);color:var(--c-oranje-tx)}
+  .chip.geaccordeerd{background:var(--c-groen-bg);color:var(--c-groen-tx)}
+
+  .leeg,.laden{text-align:center;padding:34px;color:var(--grijs);font-size:14px}
+  .toast{position:fixed;bottom:24px;left:50%;transform:translateX(-50%);background:var(--navy);color:#fff;padding:11px 20px;border-radius:10px;font-size:14px;box-shadow:0 8px 24px rgba(0,0,0,.18);opacity:0;transition:opacity .25s,transform .25s;pointer-events:none;z-index:50}
+  .toast.show{opacity:1;transform:translateX(-50%) translateY(-4px)}
+  .toast.fout{background:var(--rood)}
+  .footer{text-align:center;font-size:12px;color:var(--zand);margin-top:32px}
+
+  @media(max-width:680px){
+    .titel-h{font-size:24px}
+    .veld-grid{grid-template-columns:1fr}
+    .regels-kop{display:none}
+    .regel{grid-template-columns:1fr 1fr;gap:6px;border:1px solid var(--rand);border-radius:8px;padding:10px;margin-bottom:8px}
+    .regel .oms{grid-column:1 / -1}
+    .regel .reg-tot{grid-column:1 / -1;text-align:left}
+  }
+</style>
+</head>
+<body>
+
+<div class="login-overlay" id="login">
+  <div class="login-kaart">
+    <div class="titel">MvA Finance</div>
+    <div class="sub" id="login-sub">Inloggen&hellip;</div>
+  </div>
+</div>
+
+<div class="wrap" id="app" style="display:none">
+  <header>
+    <div>
+      <div class="titel-h">Factureren</div>
+      <div class="sub">Eigen courtagenota's en facturen · naast Effytool</div>
+    </div>
+    <a class="terug" href="https://portal.makelaarsvan.nl/">← Terug naar portal</a>
+  </header>
+
+  <!-- Formulier -->
+  <div class="kaart">
+    <h2 id="form-titel">Nieuwe factuur</h2>
+    <div class="veld-grid">
+      <div class="veld">
+        <label>Administratie (makelaar)</label>
+        <select id="f-administratie"></select>
+      </div>
+      <div class="veld">
+        <label>Soort</label>
+        <select id="f-soort">
+          <option value="Verkoop">Verkoop</option>
+          <option value="Aankoop">Aankoop</option>
+        </select>
+      </div>
+      <div class="veld">
+        <label>Relatie / debiteur *</label>
+        <input id="f-relatie" placeholder="Naam opdrachtgever">
+      </div>
+      <div class="veld">
+        <label>Objectadres</label>
+        <input id="f-adres" placeholder="Straat 1, Amsterdam">
+      </div>
+      <div class="veld">
+        <label>Betreft</label>
+        <input id="f-betreft" placeholder="Bijv. Verkoopcourtage Straat 1">
+      </div>
+      <div class="veld">
+        <label>Notaris</label>
+        <input id="f-notaris" placeholder="Notariskantoor">
+      </div>
+      <div class="veld vol">
+        <label>Betaalconditie</label>
+        <input id="f-betaalconditie" placeholder="Bij de notaris (Pro Vastgoedgroep)">
+      </div>
+    </div>
+
+    <!-- Regels -->
+    <div class="regels">
+      <div class="regels-kop">
+        <div>Omschrijving</div><div>Aantal</div><div>Prijs incl.</div><div>BTW %</div><div style="text-align:right">Totaal incl.</div><div></div>
+      </div>
+      <div id="regels"></div>
+
+      <div class="toevoeg-rij">
+        <select class="prodkies" id="prodkies"><option value="">+ Product / dienst toevoegen…</option></select>
+        <button class="btn btn-outline btn-klein" onclick="voegCourtage()">+ Courtage</button>
+        <button class="btn btn-outline btn-klein" onclick="voegVrijeRegel()">+ Vrije regel</button>
+      </div>
+    </div>
+
+    <!-- Totalen -->
+    <div class="tot-blok">
+      <div class="tot-rij"><span>Subtotaal excl. btw</span><span class="bedrag" id="t-excl">€ 0,00</span></div>
+      <div class="tot-rij"><span>BTW</span><span class="bedrag" id="t-btw">€ 0,00</span></div>
+      <div class="tot-rij incl"><span>Totaal incl. btw</span><span class="bedrag" id="t-incl">€ 0,00</span></div>
+    </div>
+
+    <div class="acties">
+      <button class="btn btn-navy" id="btn-opslaan" onclick="slaConceptOp()">Opslaan als concept</button>
+      <button class="btn btn-groen" id="btn-accorderen" style="display:none" onclick="accorderen()">✓ Accorderen &amp; nummer toekennen</button>
+      <button class="btn btn-outline" id="btn-nieuw" style="display:none" onclick="nieuweFactuur()">Nieuwe factuur</button>
+    </div>
+    <div class="info-regel" id="form-info">Een concept krijgt nog geen factuurnummer. Pas bij accorderen wordt het sluitende nummer toegekend.</div>
+  </div>
+
+  <!-- Recente facturen -->
+  <div class="kaart">
+    <h2>Recente facturen &amp; concepten</h2>
+    <div class="flijst" id="flijst"><div class="laden">Laden…</div></div>
+  </div>
+
+  <div class="footer"><b>MvA Intelligence</b> · Finance · Facturatie v1 · 2026</div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+const API     = '/.netlify/functions/factuur';
+const SB_URL  = 'https://olfcrzusdkijxroxvsgm.supabase.co';
+const SB_KEY  = 'sb_publishable_0OmJOAM_XZWCW8e_vgx2Qg_L3tdRsc4';
+
+let sbToken      = null;
+let administraties = [];
+let producten    = [];
+let regels       = [];     // {product_id, omschrijving, aantal, prijs_incl, btw_tarief, is_courtage}
+let huidigId     = null;   // id van geladen/opgeslagen concept
+let geaccordeerd = false;
+
+function esc(s){ return String(s==null?'':s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])); }
+function euro(n){ return n==null ? '—' : '€ ' + Number(n).toLocaleString('nl-NL',{minimumFractionDigits:2,maximumFractionDigits:2}); }
+function datumNL(s){ if(!s) return '—'; const d=new Date(s); return isNaN(d)?'—':d.toLocaleDateString('nl-NL',{day:'2-digit',month:'2-digit',year:'numeric'}); }
+function round2(n){ return Math.round((Number(n)+Number.EPSILON)*100)/100; }
+function toast(msg, fout){ const t=document.getElementById('toast'); t.textContent=msg; t.className='toast show'+(fout?' fout':''); setTimeout(()=>{t.className='toast';},2800); }
+function setLoginSub(html){ const el=document.getElementById('login-sub'); if(el) el.innerHTML=html; }
+
+async function api(body){
+  const r = await fetch(API,{method:'POST',headers:{'Content-Type':'application/json','Authorization':'Bearer '+(sbToken||'')},body:JSON.stringify(body)});
+  const j = await r.json();
+  if(!r.ok||j.error) throw new Error(j.error||('HTTP '+r.status));
+  return j;
+}
+
+// ── Basisdata laden ──────────────────────────────────────────────────────────
+async function laadBasis(){
+  const j = await api({action:'basisdata'});
+  administraties = j.administraties||[];
+  producten      = j.producten||[];
+
+  const selAdm = document.getElementById('f-administratie');
+  selAdm.innerHTML = administraties.map(a=>`<option value="${a.id}">${esc(a.naam)} (${esc(a.prefix)})</option>`).join('');
+  selAdm.onchange = vulBetaalconditie;
+  vulBetaalconditie();
+
+  // Productkeuze met optgroups
+  const sel = document.getElementById('prodkies');
+  const courtage = producten.filter(p=>p.is_courtage);
+  const kern     = producten.filter(p=>!p.is_courtage && p.tier==='1-KERN');
+  const opt      = producten.filter(p=>!p.is_courtage && p.tier!=='1-KERN');
+  function groep(label, lijst){
+    if(!lijst.length) return '';
+    return `<optgroup label="${esc(label)}">`+lijst.map(p=>`<option value="${p.id}">${esc(p.naam)}${p.prijs_incl>0?' — '+euro(p.prijs_incl):''}</option>`).join('')+`</optgroup>`;
+  }
+  sel.innerHTML = `<option value="">+ Product / dienst toevoegen…</option>`
+    + groep('Courtage', courtage) + groep('Kern', kern) + groep('Optioneel', opt);
+  sel.onchange = ()=>{ if(sel.value){ voegProduct(sel.value); sel.value=''; } };
+}
+
+function vulBetaalconditie(){
+  const a = administraties.find(x=>String(x.id)===document.getElementById('f-administratie').value);
+  const inp = document.getElementById('f-betaalconditie');
+  if(a && a.betaalconditie && !inp.dataset.touched) inp.value = a.betaalconditie;
+}
+document.addEventListener('input', e=>{ if(e.target && e.target.id==='f-betaalconditie') e.target.dataset.touched='1'; });
+
+// ── Regels ───────────────────────────────────────────────────────────────────
+function voegProduct(id){
+  const p = producten.find(x=>String(x.id)===String(id));
+  if(!p) return;
+  regels.push({ product_id:p.id, omschrijving:p.naam, aantal:1, prijs_incl:Number(p.prijs_incl||0), btw_tarief:Number(p.btw_tarief||21), is_courtage:!!p.is_courtage });
+  renderRegels();
+}
+function voegCourtage(){
+  const soort = document.getElementById('f-soort').value;
+  const naam  = soort==='Aankoop' ? 'Aankoopcourtage' : 'Verkoopcourtage';
+  const p = producten.find(x=>x.is_courtage && x.naam===naam);
+  regels.push({ product_id:p?p.id:null, omschrijving:naam, aantal:1, prijs_incl:0, btw_tarief:21, is_courtage:true });
+  renderRegels();
+}
+function voegVrijeRegel(){
+  regels.push({ product_id:null, omschrijving:'', aantal:1, prijs_incl:0, btw_tarief:21, is_courtage:false });
+  renderRegels();
+}
+function verwijderRegel(i){ regels.splice(i,1); renderRegels(); }
+
+function renderRegels(){
+  const box = document.getElementById('regels');
+  if(!regels.length){ box.innerHTML = `<div style="font-size:13px;color:var(--grijs);padding:10px 2px">Nog geen regels. Voeg courtage of een product toe.</div>`; berekenTotalen(); return; }
+  box.innerHTML = regels.map((r,i)=>{
+    const incl = round2((Number(r.aantal)||0)*(Number(r.prijs_incl)||0));
+    return `<div class="regel${r.is_courtage?' courtage':''}">
+      <input class="oms" value="${esc(r.omschrijving)}" placeholder="Omschrijving" oninput="upd(${i},'omschrijving',this.value)">
+      <input type="number" min="0" step="1" value="${r.aantal}" oninput="upd(${i},'aantal',this.value)">
+      <input type="number" min="0" step="0.01" value="${r.prijs_incl}" oninput="upd(${i},'prijs_incl',this.value)">
+      <input type="number" min="0" step="1" value="${r.btw_tarief}" oninput="upd(${i},'btw_tarief',this.value)">
+      <div class="reg-tot">${euro(incl)}</div>
+      <button class="verwijder" title="Verwijderen" onclick="verwijderRegel(${i})">×</button>
+    </div>`;
+  }).join('');
+  berekenTotalen();
+}
+function upd(i, veld, waarde){
+  if(veld==='omschrijving') regels[i][veld]=waarde;
+  else regels[i][veld]=Number(waarde)||0;
+  if(veld!=='omschrijving') renderRegels(); else berekenTotalen();
+}
+
+function berekenTotalen(){
+  let excl=0, btw=0, incl=0;
+  for(const r of regels){
+    const t = Number(r.btw_tarief!=null?r.btw_tarief:21);
+    const ri = round2((Number(r.aantal)||0)*(Number(r.prijs_incl)||0));
+    const re = round2(ri/(1+t/100));
+    excl+=re; btw+=round2(ri-re); incl+=ri;
+  }
+  document.getElementById('t-excl').textContent = euro(round2(excl));
+  document.getElementById('t-btw').textContent  = euro(round2(btw));
+  document.getElementById('t-incl').textContent = euro(round2(incl));
+}
+
+// ── Opslaan / accorderen ──────────────────────────────────────────────────────
+function verzamelKop(){
+  return {
+    administratie_id: document.getElementById('f-administratie').value,
+    soort:            document.getElementById('f-soort').value,
+    relatie:          document.getElementById('f-relatie').value.trim(),
+    adres:            document.getElementById('f-adres').value.trim(),
+    betreft:          document.getElementById('f-betreft').value.trim(),
+    notaris:          document.getElementById('f-notaris').value.trim(),
+    betaalconditie:   document.getElementById('f-betaalconditie').value.trim(),
+  };
+}
+
+async function slaConceptOp(){
+  if(geaccordeerd){ toast('Deze factuur is al geaccordeerd', true); return; }
+  const kop = verzamelKop();
+  if(!kop.relatie){ toast('Vul een relatie/debiteur in', true); return; }
+  if(!regels.length){ toast('Voeg minstens één regel toe', true); return; }
+  const btn = document.getElementById('btn-opslaan'); btn.disabled=true;
+  try{
+    const j = await api({ action:'concept_opslaan', factuur_id:huidigId, ...kop, regels });
+    huidigId = j.factuur_id;
+    document.getElementById('btn-accorderen').style.display='inline-flex';
+    document.getElementById('form-titel').textContent = 'Concept #'+huidigId;
+    toast('Concept opgeslagen ✓');
+    laadLijst();
+  }catch(e){ toast('Opslaan mislukt: '+e.message, true); }
+  finally{ btn.disabled=false; }
+}
+
+async function accorderen(){
+  if(!huidigId){ toast('Sla eerst op als concept', true); return; }
+  if(!confirm('Factuur accorderen? Hiermee wordt het definitieve factuurnummer toegekend. Dit kan niet ongedaan worden.')) return;
+  const btn = document.getElementById('btn-accorderen'); btn.disabled=true;
+  try{
+    const j = await api({ action:'accorderen', factuur_id:huidigId });
+    geaccordeerd = true;
+    document.getElementById('form-titel').textContent = 'Factuur '+(j.factuur.factuurnummer||'');
+    document.getElementById('btn-opslaan').style.display='none';
+    document.getElementById('btn-accorderen').style.display='none';
+    document.getElementById('btn-nieuw').style.display='inline-flex';
+    document.getElementById('form-info').textContent = 'Geaccordeerd met nummer '+(j.factuur.factuurnummer||'')+'. PDF en verzending volgen in een latere stap.';
+    toast('Geaccordeerd: '+(j.factuur.factuurnummer||''));
+    laadLijst();
+  }catch(e){ toast('Accorderen mislukt: '+e.message, true); }
+  finally{ btn.disabled=false; }
+}
+
+function nieuweFactuur(){
+  huidigId=null; geaccordeerd=false; regels=[];
+  ['f-relatie','f-adres','f-betreft','f-notaris'].forEach(id=>document.getElementById(id).value='');
+  const bc=document.getElementById('f-betaalconditie'); bc.dataset.touched=''; vulBetaalconditie();
+  document.getElementById('form-titel').textContent='Nieuwe factuur';
+  document.getElementById('btn-opslaan').style.display='inline-flex';
+  document.getElementById('btn-accorderen').style.display='none';
+  document.getElementById('btn-nieuw').style.display='none';
+  document.getElementById('form-info').textContent='Een concept krijgt nog geen factuurnummer. Pas bij accorderen wordt het sluitende nummer toegekend.';
+  renderRegels();
+  window.scrollTo({top:0,behavior:'smooth'});
+}
+
+async function bewerkConcept(id){
+  try{
+    const j = await api({ action:'concept_laden', factuur_id:id });
+    const f = j.factuur;
+    huidigId = f.id; geaccordeerd = (f.status!=='concept');
+    document.getElementById('f-administratie').value = f.administratie_id||'';
+    document.getElementById('f-soort').value = f.soort==='Aankoop'?'Aankoop':'Verkoop';
+    document.getElementById('f-relatie').value = f.relatie||'';
+    document.getElementById('f-adres').value = f.adres||'';
+    document.getElementById('f-betreft').value = f.betreft||'';
+    document.getElementById('f-notaris').value = f.notaris||'';
+    const bc=document.getElementById('f-betaalconditie'); bc.value=f.betaalconditie||''; bc.dataset.touched='1';
+    regels = (j.regels||[]).map(r=>({
+      product_id:r.product_id, omschrijving:r.omschrijving, aantal:Number(r.aantal),
+      prijs_incl: r.aantal>0 ? round2(Number(r.bedrag_incl)/Number(r.aantal)) : Number(r.bedrag_incl),
+      btw_tarief:Number(r.btw_tarief), is_courtage:false
+    }));
+    renderRegels();
+    document.getElementById('form-titel').textContent = geaccordeerd ? ('Factuur '+(f.factuurnummer||'')) : ('Concept #'+f.id);
+    document.getElementById('btn-opslaan').style.display = geaccordeerd?'none':'inline-flex';
+    document.getElementById('btn-accorderen').style.display = geaccordeerd?'none':'inline-flex';
+    document.getElementById('btn-nieuw').style.display = geaccordeerd?'inline-flex':'none';
+    window.scrollTo({top:0,behavior:'smooth'});
+  }catch(e){ toast('Laden mislukt: '+e.message, true); }
+}
+
+async function verwijderConcept(id){
+  if(!confirm('Dit concept verwijderen?')) return;
+  try{ await api({ action:'concept_verwijderen', factuur_id:id }); toast('Verwijderd'); if(huidigId===id) nieuweFactuur(); laadLijst(); }
+  catch(e){ toast('Verwijderen mislukt: '+e.message, true); }
+}
+
+// ── Lijst ────────────────────────────────────────────────────────────────────
+async function laadLijst(){
+  try{
+    const j = await api({ action:'concept_lijst' });
+    const box = document.getElementById('flijst');
+    const rows = j.facturen||[];
+    if(!rows.length){ box.innerHTML='<div class="leeg">Nog geen eigen facturen.</div>'; return; }
+    box.innerHTML = rows.map(f=>{
+      const isConcept = f.status==='concept';
+      const cls = isConcept?'concept':'geaccordeerd';
+      const adm = administraties.find(a=>a.id===f.administratie_id);
+      const titel = f.factuurnummer || 'Concept #'+f.id;
+      const acties = isConcept
+        ? `<button class="btn btn-outline btn-klein" onclick="bewerkConcept(${f.id})">Bewerken</button>
+           <button class="btn btn-outline btn-klein" onclick="verwijderConcept(${f.id})">Verwijderen</button>`
+        : `<button class="btn btn-outline btn-klein" onclick="bewerkConcept(${f.id})">Bekijken</button>`;
+      return `<div class="frij ${cls}">
+        <div class="frij-links">
+          <div class="frij-nr">${esc(titel)}</div>
+          <div class="frij-meta">${esc(f.relatie||'—')}${f.adres?' · '+esc(f.adres):''} · ${esc(adm?adm.prefix:'')} · ${esc(f.soort||'')}</div>
+        </div>
+        <div class="frij-rechts">
+          <span class="frij-bedrag">${euro(f.bedrag_incl)}</span>
+          <span class="chip ${cls}">${isConcept?'Concept':'Geaccordeerd'}</span>
+          ${acties}
+        </div>
+      </div>`;
+    }).join('');
+  }catch(e){ document.getElementById('flijst').innerHTML='<div class="leeg">Kon lijst niet laden: '+esc(e.message)+'</div>'; }
+}
+
+// ── Init/Login ─────────────────────────────────────────────────────────────────
+async function start(){
+  document.getElementById('login').style.display='none';
+  document.getElementById('app').style.display='block';
+  try{ await laadBasis(); renderRegels(); laadLijst(); }
+  catch(e){ toast('Kon gegevens niet laden: '+e.message, true); }
+}
+
+(async function(){
+  if(!location.hostname.endsWith('makelaarsvan.nl')){
+    setLoginSub('Open via <a href="https://finance.makelaarsvan.nl/" style="color:var(--navy)">finance.makelaarsvan.nl</a>.');
+    return;
+  }
+  try{
+    const { createBrowserClient } = await import('https://esm.sh/@supabase/ssr@0.5.2');
+    const sb = createBrowserClient(SB_URL, SB_KEY, {cookieOptions:{domain:'.makelaarsvan.nl',path:'/',sameSite:'lax',secure:true,maxAge:60*60*24*30}});
+    const { data:{ session } } = await sb.auth.getSession();
+    if(!session||!session.user){
+      if(sessionStorage.getItem('mva_sso_redirect')!=='1'){
+        sessionStorage.setItem('mva_sso_redirect','1');
+        location.href='https://portal.makelaarsvan.nl/';
+      } else {
+        setLoginSub('Niet ingelogd. <a href="https://portal.makelaarsvan.nl/" style="color:var(--navy)">Log in via de portal</a>.');
+      }
+      return;
+    }
+    sessionStorage.removeItem('mva_sso_redirect');
+    sbToken = session.access_token;
+    start();
+  }catch(e){
+    setLoginSub('Kon de inlogservice niet laden. Ververs de pagina.');
+  }
+})();
+</script>
+</body>
+</html>
