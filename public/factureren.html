@@ -128,6 +128,15 @@
   <!-- Formulier -->
   <div class="kaart">
     <h2 id="form-titel">Nieuwe factuur</h2>
+
+    <div class="otd-bron" id="otd-bron" style="margin-bottom:16px">
+      <label style="font-size:11px;text-transform:uppercase;letter-spacing:.05em;color:var(--grijs)">Vul uit getekende OTD</label>
+      <select id="otd-select" style="font-family:inherit;font-size:14px;border:1.5px solid var(--rand);border-radius:8px;padding:8px 10px;background:#fff;color:var(--navy);width:100%;margin-top:4px" onchange="kiesOtd(this.value)">
+        <option value="">— Handmatig, of kies een OTD om over te nemen —</option>
+      </select>
+      <div class="info-regel" id="otd-info" style="margin-top:6px"></div>
+    </div>
+
     <div class="veld-grid">
       <div class="veld">
         <label>Administratie (makelaar)</label>
@@ -154,11 +163,25 @@
       </div>
       <div class="veld">
         <label>Notaris</label>
-        <input id="f-notaris" placeholder="Notariskantoor">
+        <select id="f-notaris-sel" onchange="notarisKeuze(this.value)"><option value="">— Kies notaris —</option></select>
+        <input id="f-notaris" placeholder="Notariskantoor" style="display:none;margin-top:6px">
       </div>
       <div class="veld vol">
         <label>Betaalconditie</label>
         <input id="f-betaalconditie" placeholder="Bij de notaris (Pro Vastgoedgroep)">
+      </div>
+    </div>
+
+    <!-- Courtage uit OTD -->
+    <div id="courtage-blok" style="display:none;margin-top:16px;background:#f8f6f2;border:1px solid var(--rand);border-radius:9px;padding:12px 14px">
+      <div style="font-size:11px;text-transform:uppercase;letter-spacing:.05em;color:var(--grijs);margin-bottom:4px">Courtage-afspraak uit OTD</div>
+      <div id="courtage-afspraak" style="font-size:13px;color:var(--tekst)"></div>
+      <div style="display:flex;gap:14px;align-items:flex-end;flex-wrap:wrap;margin-top:10px">
+        <div class="veld" style="max-width:220px">
+          <label>Koop-/verkoopsom</label>
+          <input id="f-koopsom" type="number" min="0" step="1000" placeholder="0" oninput="herberekenCourtage()">
+        </div>
+        <div class="info-regel" id="courtage-uitkomst" style="margin:0 0 8px 0"></div>
       </div>
     </div>
 
@@ -213,6 +236,9 @@ let producten    = [];
 let regels       = [];     // {product_id, omschrijving, aantal, prijs_incl, btw_tarief, is_courtage}
 let huidigId     = null;   // id van geladen/opgeslagen concept
 let geaccordeerd = false;
+let notarissen   = [];
+let otdCourtage  = null;   // courtage-afspraak uit geladen OTD
+let otdBeschikbaar = false;
 
 function esc(s){ return String(s==null?'':s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])); }
 function euro(n){ return n==null ? '—' : '€ ' + Number(n).toLocaleString('nl-NL',{minimumFractionDigits:2,maximumFractionDigits:2}); }
@@ -233,11 +259,19 @@ async function laadBasis(){
   const j = await api({action:'basisdata'});
   administraties = j.administraties||[];
   producten      = j.producten||[];
+  notarissen     = j.notarissen||[];
+  otdBeschikbaar = !!j.otd_beschikbaar;
 
   const selAdm = document.getElementById('f-administratie');
   selAdm.innerHTML = administraties.map(a=>`<option value="${a.id}">${esc(a.naam)} (${esc(a.prefix)})</option>`).join('');
   selAdm.onchange = vulBetaalconditie;
   vulBetaalconditie();
+
+  // Notaris-dropdown
+  const selNot = document.getElementById('f-notaris-sel');
+  selNot.innerHTML = `<option value="">— Kies notaris —</option>`
+    + notarissen.map(n=>`<option value="${esc(n.naam)}">${esc(n.naam)}</option>`).join('')
+    + `<option value="__anders">Anders, namelijk…</option>`;
 
   // Productkeuze met optgroups
   const sel = document.getElementById('prodkies');
@@ -259,6 +293,110 @@ function vulBetaalconditie(){
   if(a && a.betaalconditie && !inp.dataset.touched) inp.value = a.betaalconditie;
 }
 document.addEventListener('input', e=>{ if(e.target && e.target.id==='f-betaalconditie') e.target.dataset.touched='1'; });
+
+// ── Notaris ──────────────────────────────────────────────────────────────────
+function notarisKeuze(v){
+  const vrij = document.getElementById('f-notaris');
+  if(v==='__anders'){ vrij.style.display='block'; vrij.value=''; vrij.focus(); }
+  else { vrij.style.display='none'; vrij.value=v; }
+}
+function setNotaris(waarde){
+  const sel = document.getElementById('f-notaris-sel');
+  const vrij = document.getElementById('f-notaris');
+  waarde = waarde||'';
+  const bestaat = notarissen.some(n=>n.naam===waarde);
+  if(waarde && bestaat){ sel.value=waarde; vrij.style.display='none'; vrij.value=waarde; }
+  else if(waarde){ sel.value='__anders'; vrij.style.display='block'; vrij.value=waarde; }
+  else { sel.value=''; vrij.style.display='none'; vrij.value=''; }
+}
+
+// ── OTD-koppeling ────────────────────────────────────────────────────────────
+async function laadOtds(){
+  const sel = document.getElementById('otd-select');
+  const info = document.getElementById('otd-info');
+  if(!otdBeschikbaar){ info.textContent='OTD-koppeling nog niet geconfigureerd.'; return; }
+  try{
+    const j = await api({action:'otd_lijst'});
+    const otds = j.otds||[];
+    if(!otds.length){ info.textContent='Geen getekende OTD\u2019s gevonden.'; return; }
+    sel.innerHTML = `<option value="">— Handmatig, of kies een OTD om over te nemen —</option>`
+      + otds.map(o=>{
+          const lbl = (o.object_adres||'(geen adres)') + ' · ' + (o.documenttype==='aankoop'?'Aankoop':'Verkoop')
+                    + ' · ' + (o.makelaar_naam||'') + (o.status!=='ondertekend'?' · '+o.status:'');
+          return `<option value="${o.id}">${esc(lbl)}</option>`;
+        }).join('');
+    info.textContent = otds.length+' OTD\u2019s beschikbaar.';
+  }catch(e){ info.textContent='Kon OTD\u2019s niet laden: '+e.message; }
+}
+
+async function kiesOtd(otdId){
+  document.getElementById('courtage-blok').style.display='none';
+  otdCourtage=null;
+  if(!otdId) return;
+  try{
+    const j = await api({action:'otd_laden', otd_id:otdId});
+    const a = j.autopop;
+    document.getElementById('f-soort').value = a.soort==='Aankoop'?'Aankoop':'Verkoop';
+    if(a.object_adres) document.getElementById('f-adres').value = a.object_adres;
+    if(a.debiteur)     document.getElementById('f-relatie').value = a.debiteur;
+    if(a.betreft)      document.getElementById('f-betreft').value = a.betreft;
+
+    // OTD-regels overnemen (vrije regels)
+    regels = (a.regels||[]).map(r=>({ ...r }));
+
+    // Courtage
+    otdCourtage = a.courtage || null;
+    const heeftAfspraak = otdCourtage && (otdCourtage.pct_incl || otdCourtage.pct_ex || otdCourtage.vast_bedrag || otdCourtage.bijzonder);
+    if(heeftAfspraak){
+      document.getElementById('courtage-blok').style.display='block';
+      document.getElementById('courtage-afspraak').innerHTML = courtageOmschrijving(otdCourtage, a.vraagprijs);
+      const ks = document.getElementById('f-koopsom');
+      ks.value = a.vraagprijs || '';
+      // courtage-regel klaarzetten (boven aan)
+      const naam = a.soort==='Aankoop'?'Aankoopcourtage':'Verkoopcourtage';
+      regels.unshift({ product_id:null, omschrijving:naam, aantal:1, prijs_incl:0, btw_tarief:21, is_courtage:true });
+      herberekenCourtage();
+    }
+    renderRegels();
+    toast('OTD overgenomen — controleer koopsom en courtage');
+  }catch(e){ toast('OTD laden mislukt: '+e.message, true); }
+}
+
+function courtageOmschrijving(c, vraagprijs){
+  const p=[];
+  if(c.vast_bedrag) p.push('vast bedrag '+euro(c.vast_bedrag));
+  if(c.pct_incl) p.push(c.pct_incl+'% incl. btw over de koopsom');
+  else if(c.pct_ex) p.push(c.pct_ex+'% excl. btw over de koopsom');
+  if(c.meerprijs_drempel && c.meerprijs_waarde) p.push('meerprijs '+c.meerprijs_waarde+(c.meerprijs_type==='percentage'?'%':' €')+' boven '+euro(c.meerprijs_drempel));
+  if(c.bijzonder) p.push('bijzonder: '+esc(c.bijzonder));
+  let s = p.length ? p.join(' + ') : 'geen standaard afspraak — vul handmatig in';
+  if(vraagprijs) s += ' · vraagprijs '+euro(vraagprijs);
+  return s;
+}
+
+function berekenCourtage(c, K){
+  if(!c || !K) return 0;
+  let incl = 0;
+  if(c.vast_bedrag) incl += Number(c.vast_bedrag);
+  if(c.pct_incl)      incl += K * Number(c.pct_incl)/100;
+  else if(c.pct_ex)   incl += (K * Number(c.pct_ex)/100) * 1.21;
+  if(c.meerprijs_drempel && c.meerprijs_waarde && K > Number(c.meerprijs_drempel)){
+    const over = K - Number(c.meerprijs_drempel);
+    if(c.meerprijs_type==='percentage') incl += over * Number(c.meerprijs_waarde)/100;
+    else incl += Number(c.meerprijs_waarde);
+  }
+  return round2(incl);
+}
+
+function herberekenCourtage(){
+  const K = Number(document.getElementById('f-koopsom').value||0);
+  const bedrag = berekenCourtage(otdCourtage, K);
+  const ci = regels.findIndex(r=>r.is_courtage);
+  if(ci>=0){ regels[ci].prijs_incl = bedrag; regels[ci].aantal = 1; }
+  document.getElementById('courtage-uitkomst').innerHTML =
+    K ? `Berekende courtage: <b>${euro(bedrag)}</b> incl. btw — controleer en pas zo nodig aan in de regel.` : 'Vul de koopsom in om de courtage te berekenen.';
+  renderRegels();
+}
 
 // ── Regels ───────────────────────────────────────────────────────────────────
 function voegProduct(id){
@@ -364,8 +502,11 @@ async function accorderen(){
 }
 
 function nieuweFactuur(){
-  huidigId=null; geaccordeerd=false; regels=[];
-  ['f-relatie','f-adres','f-betreft','f-notaris'].forEach(id=>document.getElementById(id).value='');
+  huidigId=null; geaccordeerd=false; regels=[]; otdCourtage=null;
+  ['f-relatie','f-adres','f-betreft','f-notaris','f-koopsom'].forEach(id=>document.getElementById(id).value='');
+  document.getElementById('otd-select').value='';
+  document.getElementById('courtage-blok').style.display='none';
+  setNotaris('');
   const bc=document.getElementById('f-betaalconditie'); bc.dataset.touched=''; vulBetaalconditie();
   document.getElementById('form-titel').textContent='Nieuwe factuur';
   document.getElementById('btn-opslaan').style.display='inline-flex';
@@ -386,8 +527,11 @@ async function bewerkConcept(id){
     document.getElementById('f-relatie').value = f.relatie||'';
     document.getElementById('f-adres').value = f.adres||'';
     document.getElementById('f-betreft').value = f.betreft||'';
-    document.getElementById('f-notaris').value = f.notaris||'';
     const bc=document.getElementById('f-betaalconditie'); bc.value=f.betaalconditie||''; bc.dataset.touched='1';
+    setNotaris(f.notaris||'');
+    document.getElementById('otd-select').value='';
+    document.getElementById('courtage-blok').style.display='none';
+    otdCourtage=null;
     regels = (j.regels||[]).map(r=>({
       product_id:r.product_id, omschrijving:r.omschrijving, aantal:Number(r.aantal),
       prijs_incl: r.aantal>0 ? round2(Number(r.bedrag_incl)/Number(r.aantal)) : Number(r.bedrag_incl),
@@ -443,7 +587,7 @@ async function laadLijst(){
 async function start(){
   document.getElementById('login').style.display='none';
   document.getElementById('app').style.display='block';
-  try{ await laadBasis(); renderRegels(); laadLijst(); }
+  try{ await laadBasis(); renderRegels(); laadOtds(); laadLijst(); }
   catch(e){ toast('Kon gegevens niet laden: '+e.message, true); }
 }
 
