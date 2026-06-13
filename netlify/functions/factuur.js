@@ -81,6 +81,28 @@ const sb = {
   },
 };
 
+// Tweede databron: het OTD-project (apart Supabase-project, alleen-lezen).
+const OTD_URL = 'https://oonlagagxodohvakwfat.supabase.co';
+const OTD_KEY = process.env.OTD_SUPABASE_SERVICE_KEY;
+const otd = {
+  beschikbaar() { return !!OTD_KEY; },
+  async get(path) {
+    const r = await fetch(`${OTD_URL}/rest/v1/${path}`, {
+      headers: { apikey: OTD_KEY, Authorization: `Bearer ${OTD_KEY}`, 'Content-Type': 'application/json' },
+    });
+    if (!r.ok) throw new Error(`OTD GET ${path} → ${r.status}: ${await r.text()}`);
+    return r.json();
+  },
+};
+
+// Naam van een opdrachtgever netjes samenstellen
+function opdrachtgeverNaam(o) {
+  if (!o) return '';
+  if (o.type === 'bedrijf' && o.bedrijfsnaam) return o.bedrijfsnaam.trim();
+  const delen = [o.voornamen, o.tussenvoegsels, o.achternaam].filter(Boolean).map(s => String(s).trim());
+  return delen.join(' ').replace(/\s+/g, ' ').trim();
+}
+
 async function verifieerGebruiker(token) {
   const r = await fetch(`${SUPABASE_URL}/auth/v1/user`, {
     headers: { apikey: SUPABASE_SERVICE_KEY, Authorization: `Bearer ${token}` },
@@ -168,7 +190,94 @@ exports.handler = async (event) => {
       const producten = await sb.get(
         'producten?select=id,tier,naam,sectie,markering,prijs_incl,btw_tarief,is_courtage,variabel,is_pakket&actief=eq.true&order=is_courtage.desc,sortering.asc'
       );
-      return { statusCode: 200, headers, body: JSON.stringify({ ok: true, administraties, producten }) };
+      const notarissen = await sb.get('notarissen?select=id,naam&actief=eq.true&order=naam.asc');
+      return { statusCode: 200, headers, body: JSON.stringify({ ok: true, administraties, producten, notarissen, otd_beschikbaar: otd.beschikbaar() }) };
+    }
+
+    // ── otd_lijst — getekende (en aangeboden) OTD's om uit te factureren ─────────
+    if (action === 'otd_lijst') {
+      if (!otd.beschikbaar()) {
+        return { statusCode: 200, headers, body: JSON.stringify({ ok: true, otds: [], otd_beschikbaar: false }) };
+      }
+      const dossiers = await otd.get(
+        'otd_dossiers?select=id,documenttype,status,object_adres,object_plaats,ondertekend_op,aangemaakt_op,makelaar_id' +
+        '&status=in.(ondertekend,aangeboden)&gearchiveerd=eq.false&order=ondertekend_op.desc.nullslast,aangemaakt_op.desc&limit=100'
+      );
+      // makelaar-namen erbij
+      const mids = [...new Set(dossiers.map(d => d.makelaar_id).filter(Boolean))];
+      let naamVan = {};
+      if (mids.length) {
+        const ms = await otd.get(`otd_makelaars?select=id,naam&id=in.(${mids.join(',')})`);
+        for (const m of ms) naamVan[m.id] = m.naam;
+      }
+      const otds = dossiers.map(d => ({
+        id: d.id, documenttype: d.documenttype, status: d.status,
+        object_adres: d.object_adres, object_plaats: d.object_plaats,
+        ondertekend_op: d.ondertekend_op, makelaar_naam: naamVan[d.makelaar_id] || null,
+      }));
+      return { statusCode: 200, headers, body: JSON.stringify({ ok: true, otds, otd_beschikbaar: true }) };
+    }
+
+    // ── otd_laden — één OTD ophalen en als autopopulate-pakket teruggeven ─────────
+    if (action === 'otd_laden') {
+      if (!otd.beschikbaar()) return { statusCode: 400, headers, body: JSON.stringify({ error: 'OTD-koppeling niet geconfigureerd' }) };
+      const { otd_id } = payload;
+      if (!otd_id) return { statusCode: 400, headers, body: JSON.stringify({ error: 'otd_id vereist' }) };
+
+      const dr = await otd.get(`otd_dossiers?select=*&id=eq.${encodeURIComponent(otd_id)}&limit=1`);
+      const d = dr && dr[0];
+      if (!d) return { statusCode: 404, headers, body: JSON.stringify({ error: 'OTD niet gevonden' }) };
+
+      const ogs = await otd.get(`otd_opdrachtgevers?select=*&dossier_id=eq.${encodeURIComponent(otd_id)}&order=volgorde.asc`);
+      const debiteur = (ogs || []).map(opdrachtgeverNaam).filter(Boolean).join(' & ');
+
+      // OTD-regels + productnamen → voorgestelde factuurregels (als vrije regels: ander project)
+      const regels = await otd.get(`otd_regels?select=product_id,sectie,prijs_snapshot,aantal,volgorde&dossier_id=eq.${encodeURIComponent(otd_id)}&order=volgorde.asc`);
+      let prodNaam = {};
+      const pids = [...new Set((regels || []).map(r => r.product_id).filter(Boolean))];
+      if (pids.length) {
+        const ps = await otd.get(`otd_producten?select=id,naam,commerciele_naam,btw_tarief&id=in.(${pids.join(',')})`);
+        for (const p of ps) prodNaam[p.id] = { naam: p.commerciele_naam || p.naam, btw: Number(p.btw_tarief || 21) };
+      }
+      const voorstelRegels = (regels || []).map(r => {
+        const p = prodNaam[r.product_id] || {};
+        return {
+          product_id: null, // ander project — als vrije regel overnemen
+          omschrijving: p.naam || r.sectie || 'Dienst',
+          aantal: Number(r.aantal || 1),
+          prijs_incl: Number(r.prijs_snapshot || 0),
+          btw_tarief: p.btw || 21,
+          is_courtage: false,
+        };
+      });
+
+      const objectAdres = [d.object_adres, d.object_postcode, d.object_plaats].filter(Boolean).join(', ');
+      const soort = d.documenttype === 'aankoop' ? 'Aankoop' : 'Verkoop';
+      const betreft = (soort === 'Aankoop' ? 'Aankoopcourtage ' : 'Verkoopcourtage ') + (d.object_adres || '');
+
+      const autopop = {
+        otd_id: d.id,
+        soort,
+        object_adres: objectAdres,
+        debiteur,
+        betreft: betreft.trim(),
+        vraagprijs: d.vraagprijs != null ? Number(d.vraagprijs) : null,
+        realworks_object_id: d.realworks_object_id || null,
+        cloze_id: d.cloze_id || null,
+        courtage: {
+          type:            d.courtage_type,
+          model:           d.courtage_model,
+          pct_incl:        d.courtage_pct_incl != null ? Number(d.courtage_pct_incl) : null,
+          pct_ex:          d.courtage_pct_ex != null ? Number(d.courtage_pct_ex) : null,
+          vast_bedrag:     d.courtage_vast_bedrag != null ? Number(d.courtage_vast_bedrag) : null,
+          meerprijs_type:  d.courtage_meerprijs_type,
+          meerprijs_waarde:   d.courtage_meerprijs_waarde != null ? Number(d.courtage_meerprijs_waarde) : null,
+          meerprijs_drempel:  d.courtage_meerprijs_drempel != null ? Number(d.courtage_meerprijs_drempel) : null,
+          bijzonder:       d.courtage_bijzonder || null,
+        },
+        regels: voorstelRegels,
+      };
+      return { statusCode: 200, headers, body: JSON.stringify({ ok: true, autopop }) };
     }
 
     // ── concept_lijst ───────────────────────────────────────────────────────────
